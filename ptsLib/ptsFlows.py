@@ -53,10 +53,22 @@ class PTSFlows(object):
         self.ndGraph = NodeGraph()        
         self.ndGraph.register_nodes(list(self.ptsNodeCollections.values()))        
         self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
-        self.ndGraph.widget.currentWidget().custom_data_dropped.connect(self.doFlowNodeDropped)
+                
         self.ndGraph.node_selected.connect(self.doFlowNodeSelected)
                 
-        self.ndGraph.auto_layout_nodes()       
+        self.ndGraph.auto_layout_nodes()
+        
+        
+        self.ndGraph.widget.currentWidget().custom_data_dropped.connect(self.doFlowNodeDropped)
+        self.ndGraph.widget.currentWidget().custom_key_pressed.connect(self.doFlowKeyPressed)
+        
+        
+    def doFlowKeyPressed(self, eve):
+        if (eve.key() == QtCore.Qt.Key_Delete):
+            if len(self.ndGraph.selected_nodes()) == 1:
+                selNode = self.ndGraph.selected_nodes()[0]
+                self.ndGraph.remove_node(selNode)
+           
     
     def doFlowNodeSelected(self, nodeObj):
         if self.nodeSelectedFn: self.nodeSelectedFn(nodeObj)     
