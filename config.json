@@ -6,11 +6,12 @@
 	"logging" : {
 					"logDisable" : 0,
 					"logLevel" : "DEBUG",
-					"logDateTimeFormat" : "%Y-%m-%d %I:%M:%S%p",
+					"logDateTimeFormat-BCK" : "%Y-%m-%d %I:%M:%S%p",
+					"logDateTimeFormat" : "%Y:%m:%d %I:%M:%S%p",
 					"logFormat": "[%(asctime)s]%(levelname).1s:%(message)s",
 					"logToConsole" : 1,
 					"logToFile" : 1,
 					"logFile" : "output.log",
-					"logModuleName" : 1
+					"logModuleName" : 0
 				}
 }

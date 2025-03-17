@@ -1,0 +1,261 @@
+{
+  "graph":{
+    "layout_direction":0,
+    "acyclic":true,
+    "pipe_collision":false,
+    "pipe_slicing":true,
+    "pipe_style":1,
+    "accept_connection_types":{},
+    "reject_connection_types":{}
+  },
+  "nodes":{
+    "0x1733295ee10":{
+      "type_":"nodes.IntInput",
+      "icon":null,
+      "name":"ndIntInput",
+      "color":[
+        88,
+        88,
+        88,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":80,
+      "pos":[
+        -183.99918716696243,
+        143.35455381733348
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x173329460d0":{
+      "type_":"nodes.IntInput",
+      "icon":null,
+      "name":"kumaresan",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":80,
+      "pos":[
+        -233.2239248760672,
+        539.1782559501505
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x17332946390":{
+      "type_":"nodes.IntOutput",
+      "icon":null,
+      "name":"kumaresan 1",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":80,
+      "pos":[
+        750.4623318781748,
+        465.08791245429586
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x1733292a6d0":{
+      "type_":"nodes.Adder",
+      "icon":null,
+      "name":"ndAdder",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":81.2,
+      "pos":[
+        290.06884849445566,
+        306.3277040097163
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x1733298e250":{
+      "type_":"nodes.IntOutput",
+      "icon":null,
+      "name":"kumaresan 2",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":80,
+      "pos":[
+        858.910668599319,
+        133.23650387549503
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    }
+  },
+  "connections":[
+    {
+      "out":[
+        "0x1733295ee10",
+        "out A"
+      ],
+      "in":[
+        "0x1733292a6d0",
+        "in A"
+      ]
+    },
+    {
+      "out":[
+        "0x173329460d0",
+        "out A"
+      ],
+      "in":[
+        "0x1733292a6d0",
+        "in B"
+      ]
+    },
+    {
+      "in":[
+        "0x17332946390",
+        "in A"
+      ],
+      "out":[
+        "0x1733292a6d0",
+        "out A"
+      ]
+    },
+    {
+      "out":[
+        "0x1733292a6d0",
+        "out A"
+      ],
+      "in":[
+        "0x1733298e250",
+        "in A"
+      ]
+    }
+  ],
+  "nodeProps":{
+    "ndIntInput":{
+      "input1":"kumares",
+      "input2":"some moree",
+      "input3_spl_var":"some moree and more",
+      "Node Name":"ndIntInput"
+    },
+    "kumaresan":{
+      "input1":"some valuie",
+      "input2":"some moree",
+      "input3_spl_var":"some moree and more",
+      "Node Name":"kumaresan"
+    },
+    "kumaresan 1":{
+      "outpxs":"mukund",
+      "outp4_spl_vaeer":"rrre and more",
+      "Node Name":"kumaresan 1"
+    },
+    "ndAdder":{
+      "adder":"sdfe vsdfsaluie",
+      "outp2":"ffdfdsome moree",
+      "outp3_spl_var":"ffdsofdme moree and more",
+      "outp4_spl_var":"fdme moree and more",
+      "Node Name":"ndAdder"
+    },
+    "kumaresan 2":{
+      "outpxs":"side ways",
+      "outp4_spl_vaeer":"rrre and more",
+      "Node Name":"kumaresan"
+    }
+  }
+}

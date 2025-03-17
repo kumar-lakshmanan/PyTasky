@@ -429,14 +429,14 @@
       <number>2</number>
      </property>
      <item row="0" column="0">
-      <widget class="QFrame" name="propsContainer">
+      <widget class="QFrame" name="propsFrame">
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
        <property name="frameShadow">
         <enum>QFrame::Sunken</enum>
        </property>
-       <layout class="QGridLayout" name="propContainerLayout">
+       <layout class="QGridLayout" name="gridLayout_7">
         <property name="leftMargin">
          <number>2</number>
         </property>
