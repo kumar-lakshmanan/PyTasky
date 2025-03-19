@@ -9,14 +9,14 @@
     "reject_connection_types":{}
   },
   "nodes":{
-    "0x1733295ee10":{
+    "0x2d3ae098fd0":{
       "type_":"nodes.IntInput",
       "icon":null,
       "name":"ndIntInput",
       "color":[
-        88,
-        88,
-        88,
+        13,
+        18,
+        23,
         255
       ],
       "border_color":[
@@ -37,17 +37,17 @@
       "width":220,
       "height":80,
       "pos":[
-        -183.99918716696243,
-        143.35455381733348
+        -297.0,
+        83.0
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x173329460d0":{
+    "0x2d3ae098610":{
       "type_":"nodes.IntInput",
       "icon":null,
-      "name":"kumaresan",
+      "name":"ndIntInput 1",
       "color":[
         13,
         18,
@@ -72,17 +72,17 @@
       "width":220,
       "height":80,
       "pos":[
-        -233.2239248760672,
-        539.1782559501505
+        -346.1033807716217,
+        262.16003948253797
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x17332946390":{
-      "type_":"nodes.IntOutput",
+    "0x2d3ae099cd0":{
+      "type_":"nodes.IntInput",
       "icon":null,
-      "name":"kumaresan 1",
+      "name":"ndIntInput 2",
       "color":[
         13,
         18,
@@ -107,14 +107,14 @@
       "width":220,
       "height":80,
       "pos":[
-        750.4623318781748,
-        465.08791245429586
+        -282.6610347979518,
+        520.5834992192358
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x1733292a6d0":{
+    "0x2d3ae09a550":{
       "type_":"nodes.Adder",
       "icon":null,
       "name":"ndAdder",
@@ -142,17 +142,52 @@
       "width":220,
       "height":81.2,
       "pos":[
-        290.06884849445566,
-        306.3277040097163
+        125.0,
+        190.0
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x1733298e250":{
+    "0x2d3ae09b210":{
+      "type_":"nodes.Adder",
+      "icon":null,
+      "name":"mul",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":81.2,
+      "pos":[
+        516.0467220607053,
+        329.4095418248311
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x2d3ae09bb10":{
       "type_":"nodes.IntOutput",
       "icon":null,
-      "name":"kumaresan 2",
+      "name":"ndIntOutput",
       "color":[
         13,
         18,
@@ -177,8 +212,43 @@
       "width":220,
       "height":80,
       "pos":[
-        858.910668599319,
-        133.23650387549503
+        809.0,
+        85.0
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x2d3ae09bd50":{
+      "type_":"nodes.IntOutput",
+      "icon":null,
+      "name":"ndIntOutput 1",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":true,
+      "visible":true,
+      "width":220,
+      "height":80,
+      "pos":[
+        981.0,
+        567.0
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
@@ -188,74 +258,98 @@
   "connections":[
     {
       "out":[
-        "0x1733295ee10",
-        "out A"
+        "0x2d3ae098fd0",
+        "out"
       ],
       "in":[
-        "0x1733292a6d0",
-        "in A"
+        "0x2d3ae09a550",
+        "in1"
       ]
     },
     {
       "out":[
-        "0x173329460d0",
-        "out A"
+        "0x2d3ae098610",
+        "out"
       ],
       "in":[
-        "0x1733292a6d0",
-        "in B"
-      ]
-    },
-    {
-      "in":[
-        "0x17332946390",
-        "in A"
-      ],
-      "out":[
-        "0x1733292a6d0",
-        "out A"
+        "0x2d3ae09a550",
+        "in2"
       ]
     },
     {
       "out":[
-        "0x1733292a6d0",
-        "out A"
+        "0x2d3ae099cd0",
+        "out"
       ],
       "in":[
-        "0x1733298e250",
-        "in A"
+        "0x2d3ae09b210",
+        "in2"
+      ]
+    },
+    {
+      "out":[
+        "0x2d3ae09a550",
+        "out"
+      ],
+      "in":[
+        "0x2d3ae09b210",
+        "in1"
+      ]
+    },
+    {
+      "out":[
+        "0x2d3ae09a550",
+        "out"
+      ],
+      "in":[
+        "0x2d3ae09bb10",
+        "in"
+      ]
+    },
+    {
+      "out":[
+        "0x2d3ae09b210",
+        "out"
+      ],
+      "in":[
+        "0x2d3ae09bd50",
+        "in"
       ]
     }
   ],
   "nodeProps":{
     "ndIntInput":{
-      "input1":"kumares",
-      "input2":"some moree",
-      "input3_spl_var":"some moree and more",
-      "Node Name":"ndIntInput"
+      "Node Name":"ndIntInput",
+      "Any Number":"66"
     },
-    "kumaresan":{
-      "input1":"some valuie",
-      "input2":"some moree",
-      "input3_spl_var":"some moree and more",
-      "Node Name":"kumaresan"
+    "ndIntInput 1":{
+      "Node Name":"ndIntInput 1",
+      "Any Number":"45"
     },
-    "kumaresan 1":{
-      "outpxs":"mukund",
-      "outp4_spl_vaeer":"rrre and more",
-      "Node Name":"kumaresan 1"
+    "ndIntInput 2":{
+      "Node Name":"ndIntInput 2",
+      "Any Number":"12"
     },
     "ndAdder":{
-      "adder":"sdfe vsdfsaluie",
-      "outp2":"ffdfdsome moree",
-      "outp3_spl_var":"ffdsofdme moree and more",
-      "outp4_spl_var":"fdme moree and more",
-      "Node Name":"ndAdder"
+      "doAdder":1,
+      "doSub":0,
+      "doMultiply":0,
+      "doDivide":0
     },
-    "kumaresan 2":{
-      "outpxs":"side ways",
-      "outp4_spl_vaeer":"rrre and more",
-      "Node Name":"kumaresan"
+    "mul":{
+      "Node Name":"mul",
+      "doAdder":"0",
+      "doSub":"0",
+      "doMultiply":"1",
+      "doDivide":"0"
+    },
+    "ndIntOutput":{
+      "simpleDisplay":1,
+      "logStyleDisplay":1
+    },
+    "ndIntOutput 1":{
+      "simpleDisplay":1,
+      "logStyleDisplay":1
     }
   }
 }

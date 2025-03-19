@@ -9,9 +9,16 @@
 * ~~UI - Node listing based on file~~
 * ~~Drag and Drop Node~~
 * ~~Flow save / load ~~
-* Flow Processing
-* Node Properties
-	* UI READ/ WRITE PROPS
+* ~~Node Properties~~
+	* ~~UI READ/ WRITE PROPS~~
 * Parallel Node Execution - IN poc
-
-
+* ~~draft Flow Processing~~
+* ~~Node DELETE ~~
+* ~~CLEAN-UP CURRENT CODE~~
+* debug flow
+	* debug variables
+	* highlight slo execute
+* clean/structurize node modules
+* dynmaic modules
+* error handling
+	

@@ -32,11 +32,25 @@ class IntOutput(BaseNode):
         super(IntOutput, self).__init__()
 
         # create node inputs.
-        self.add_input('in A',multi_input=True)
+        self.add_input('in',multi_input=True)
         
         self.props = {}
-        self.props['outpxs'] = "hhhe vsdfsaluie"
-        self.props['outp4_spl_vaeer'] = "rrre and more"        
+        self.props['simpleDisplay'] = 1
+        self.props['logStyleDisplay'] = 1        
     
-    def nodeAction(self):
-        print("nodeAction" + NODE_NAME)
+    def nodeAction(self, reqData={}):
+        print("Performing nodeAction for " + self.NODE_NAME)
+        
+        inpPortData = reqData['in']
+                
+        if int(self.props['logStyleDisplay']):
+            pass
+            print(f"Answer is : {inpPortData}")
+        else:
+            pass
+            print(f"Got data: {reqData}")
+
+        print("Completed nodeAction for " + self.NODE_NAME)
+        
+        return {}
+        

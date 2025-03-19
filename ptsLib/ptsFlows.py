@@ -16,62 +16,125 @@ from NodeGraphQt import NodeGraph
 from kQt import kQtTools
 import kTools 
 import json
+from ptsLib import ptsFlowExecuter
 
 class PTSFlows(object):
 
-    def __init__(self, parent):
-        
+    def __init__(self, parent):        
         self.tls = kTools.GetKTools()    
         self.qttls = kQtTools.KQTTools()
         self.PTS = parent
         self.parentUi = self.PTS.ui
         self.console = self.PTS.console
-        self.nodeSelectedFn = None
-        
-        self.ptsNodesPath = "G:/pyworkspace/PyTasky/ptsLib/ptsNodes"
 
-        self.ptsNodeCollections = {}
-        self.ptsCurrentNodes = []
-        
-        self.ptsNodeProps = {}
+        self.ptsNodesPath = "G:/pyworkspace/PyTasky/ptsNodes"
 
-        self.doFlowUISetup()
-        
-    
-    def doFlowUISetup(self):
-        self.nodesMods = self.tls.getFileList(self.ptsNodesPath,".py")
-        
-        for file in self.nodesMods:
-            fileName = os.path.basename(file).replace(".py","")
-            if fileName != "__init__" or fileName in list(self.ptsNodeCollections.keys()):
-                modImported = self.console.loadModule(fileName, file)
-                mod = getattr(modImported, fileName)
-                self.ptsNodeCollections[fileName] = mod 
-            else:
-                self.tls.error(f'{fileName} cant be node to load might be duplicate. {file}')
-        
-        self.ndGraph = NodeGraph()        
-        self.ndGraph.register_nodes(list(self.ptsNodeCollections.values()))        
-        self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
-                
-        self.ndGraph.node_selected.connect(self.doFlowNodeSelected)
-                
+        self.doFlowInitializer()
+            
+    def doFlowInitializer(self):
+        self.loadNodeModules()
+        self.nodeGraphSetup()
+        self.nodeGraphSignalConnectors()
         self.ndGraph.auto_layout_nodes()
+        self.flowExecuterInitalizer()
+    
+    def flowExecuterInitalizer(self):
+        self.flowExec = ptsFlowExecuter.PTSFlowExecuter(self)  
         
+    def refreshFlow(self):
+        self.tls.info("Refreshed")
+        self.ndGraph.viewer().update()
+        self.ndGraph.viewer().force_update()
+        self.ndGraph.viewer().repaint()
+        self.ndGraph.viewer()._update_scene()
+        zoomVal = self.ndGraph._viewer.get_zoom()
+        self.ndGraph._viewer.set_zoom(zoomVal+0.0000000000001)
+        self.ndGraph._viewer.set_zoom(zoomVal)
+        QApplication.processEvents()
+         
+    def doRunFlow(self):
+        print("Running flow...")
+        self.flowExec.doExecuteCurrentFlow()
         
+    def doDebugFlow(self):
+        self.flowExec.debugWait = 0
+                       
+    def nodeGraphSignalConnectors(self):
+        self.tls.info(f"Node graph signal connectors initializing.")
+        self.ndGraph.node_selected.connect(self.doFlowNodeSelected)
         self.ndGraph.widget.currentWidget().custom_data_dropped.connect(self.doFlowNodeDropped)
         self.ndGraph.widget.currentWidget().custom_key_pressed.connect(self.doFlowKeyPressed)
+                
+    def nodeGraphSetup(self):
+        self.tls.info(f"Setting node graph...")
+        self.ndGraph = NodeGraph()        
+        self.ndGraph.register_nodes(list(self.ptsNodeModCollections.values()))        
+        self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
         
+    def loadNodeModules(self):
+        self.tls.info(f"Loading node modules from {self.ptsNodesPath}...")
+        self.ptsNodeModCollections = {}
+        nodesMods = self.tls.getFileList(self.ptsNodesPath,".py")
+        
+        for file in nodesMods:
+            fileName = os.path.basename(file).replace(".py","")
+            if fileName == "__init__": 
+                self.tls.debug(f"{file} not a valid node.")
+            elif fileName in list(self.ptsNodeModCollections.keys()): 
+                self.tls.debug(f"{file} can't be loaded, Might be duplicate.") 
+            else:
+                modImported = self.console.loadModule(fileName, file)
+                mod = getattr(modImported, fileName)
+                self.ptsNodeModCollections[fileName] = mod 
         
     def doFlowKeyPressed(self, eve):
+        #self.ndGraph.viewer().selected_items()
         if (eve.key() == QtCore.Qt.Key_Delete):
-            if len(self.ndGraph.selected_nodes()) == 1:
-                selNode = self.ndGraph.selected_nodes()[0]
-                self.ndGraph.remove_node(selNode)
+            
+            selectedNodes = self.ndGraph.selected_nodes()
+            selectedPipes = self.ndGraph.viewer().selected_pipes()
+            
+            for eachNode in selectedNodes:
+                self.tls.info(f"Deleting... {eachNode.NODE_NAME}")
+                self.ndGraph.remove_node(eachNode)
+                self.tls.info(f"Done")                
+                self.refreshFlow()
+                
+            if len(selectedPipes) == 1:
+                selPipe = selectedPipes[0]
+                #selPipe.delete() #TODO: After delete unable to recreate the flow from same src to dst
            
-    
     def doFlowNodeSelected(self, nodeObj):
-        if self.nodeSelectedFn: self.nodeSelectedFn(nodeObj)     
+        print(f"---node select {nodeObj}")
+        newDict = {}
+        newDict["Node Name"] = nodeObj.NODE_NAME 
+        for eachKey in nodeObj.props.keys():
+            newDict[eachKey] = nodeObj.props[eachKey]                
+        self.qttls.createPropEditor(self.parentUi.propsHolder, newDict, self.doNodePropsUpdate, nodeObj)        
+        self.doLoadNodeDesc(nodeObj)
+        
+    def doNodePropsUpdate(self, table, nodeObj):        
+        updated_dict = {}
+        for row in range(table.rowCount()):
+            key = table.item(row, 0).text()  # Property name (column 1)
+            value = table.item(row, 1).text()  # User-edited value (column 2)
+            updated_dict[key] = value            
+        nodeObj.props = updated_dict
+        nodeObj.set_name(updated_dict['Node Name'])
+        updated_dict['Node Name'] = nodeObj.name()
+        nodeObj.NODE_NAME = nodeObj.name()
+        print("Updated Properties:", updated_dict)
+        self.doFlowNodeSelected(nodeObj)
+                
+    def doLoadNodeDesc(self, nodeObj):        
+        html = ""
+        html += f"<b>Name: </b>{nodeObj.model.name}"
+        html += "<br>"
+        html += f"<b>Type: </b>{nodeObj.model.type_}"
+        html += "<hr>"
+        html += nodeObj.NODE_DESC
+                
+        self.parentUi.infoView.setHtml(html)        
 
     def doFlowNodeDropped(self, event, pos):
         nodeItem = event.source().selectedItems()[0]
@@ -79,22 +142,13 @@ class PTSFlows(object):
         nodePath = str(nodeItem.data(0, QtCore.Qt.UserRole))
         x = pos.x()
         y = pos.y()
-        nodeObj = self.ptsNodeCollections[nodeName]
-        node = self.ndGraph.create_node(nodeObj.type_, pos=[x,y])
-        self.ptsCurrentNodes.append(node)        
-    
-    def doRunFlow(self):
-        print("Running flow...")
-        
-        flowName = self.ndGraph.current_session()        
-        print(flowName)
-        
-        nds = self.ndGraph.all_nodes()
-        nd = self.ndGraph.model.nodes
-        for eachKey in nd:
-            nwnd = nd[eachKey]
-        print(nwnd)
-        
+        if nodeName in self.ptsNodeModCollections:
+            nodeObj = self.ptsNodeModCollections[nodeName]
+            node = self.ndGraph.create_node(nodeObj.type_, pos=[x,y])
+            self.tls.info(f"Node added {node.NODE_NAME}")
+        else:
+            self.tls.error(f"Node {nodeName} is not valid. Not pre-loaded valid node.")
+
     def doSaveFlow(self, file_path):
         sessionInfo = self.ndGraph.serialize_session()
         print(sessionInfo)
@@ -123,8 +177,7 @@ class PTSFlows(object):
 
         # update the current session.
         self.ndGraph._model.session = file_path
-        
-        
+                
     def doLoadFlow(self, file_path):
 
         file_path = file_path.strip()
@@ -153,12 +206,4 @@ class PTSFlows(object):
             eachNode.props = fileContent['nodeProps'][eachNode.NODE_NAME]
                 
         self.ndGraph.session_changed.emit(file_path)    
-    
-    def getNodeByNodeName(self, nodeName):
-        for eachNode in self.ndGraph.all_nodes():
-            if nodeName.strip() == eachNode.NODE_NAME.strip():
-                return eachNode
-        return None
-        
-        
-                   
+

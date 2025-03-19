@@ -39,12 +39,25 @@ class IntInput(BaseNode):
         super(IntInput, self).__init__()
 
         # create node outputs.
-        self.add_output('out A', multi_output=True)
+        self.add_output('out', multi_output=True)
         
         self.props = {}
-        self.props['input1'] = "some valuie"
-        self.props['input2'] = "some moree"
-        self.props['input3_spl_var'] = "some moree and more"
+        self.props['Any Number'] = 100
     
-    def nodeAction(self):
-        print("nodeAction" + NODE_NAME)
+    def nodeAction(self, reqData={}):
+        print("Performing nodeAction for " + self.NODE_NAME)
+        
+        output = int(self.props['Any Number'])
+        
+        print("Completed nodeAction for " + self.NODE_NAME)
+        
+        return {'out': output}
+         
+        
+
+
+        
+        
+        
+        
+        
