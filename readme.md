@@ -10,7 +10,7 @@ Aim is to build a robust python based handy tool to help automate almost any ope
 - Cover almost any automation that python can possibly do.
 - With almost zero complexity of installation. deployment. configuration etc. 
 
-![PyTasky](image1.jpg?raw=true "PyTasky")
+![PyTasky](https://github.com/kumar-lakshmanan/PyTasky/blob/main/image1.png?raw=true "PyTasky")
 
 Eg:
  - Task automation, Scheduling, Web scrapping, Web Service
