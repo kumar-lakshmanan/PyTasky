@@ -33,25 +33,37 @@ class TreeUIHandler():
         self.qtTree = kQtTreeWidget.TreeWidget()
         self.iconFolder = 'folder.png'
         self.iconScript = 'code.png'
-        self.contextMenuOpenSpace = ['Create Folder...','Open Scripts Folder','Open Sachthya Folder','','Refresh'] 
-        self.contextMenuFileItems = ['Execute','','Edit Script','|Edit GUI','','Delete']
-        self.contextMenuDirItems = ['Create GUI Script...','Create Console Script...','','Create Folder...']
+        # self.contextMenuOpenSpace = ['Create Folder...','Open Scripts Folder','Open Sachthya Folder','','Refresh'] 
+        # self.contextMenuFileItems = ['Execute','','Edit Script','|Edit GUI','','Delete']
+        # self.contextMenuDirItems = ['Create GUI Script...','Create Console Script...','','Create Folder...']
 
         self.type = params['type']
         self.filePath = params['filePath']
         self.disallowedFolder = params['disallowedFolder'] #['__','.git']
         self.allowedFiles = params['allowedFiles'] #['.py']
         self.fileContentShouldHave = params['fileContentShouldHave']
+
         # self.enableDragDrop = params['enableDragDrop']
         # self.dragDropFn = params['dragDropFn']
-        #
+        self.contextMenuOpenSpace = params['contextMenuOpenSpace']
+        self.contextMenuFileItems = params['contextMenuFileItems']
+        self.contextMenuDirItems = params['contextMenuDirItems']       
 
         self.targetTreeWidget = params['targetTreeObject'] #self.parentUi.treePtsScripts
+        
+        self.menuSelectedFn = params['menuSelectedFn']
+        self.dblClickFn = params['dblClickFn']
 
         self.targetTreeWidget.setDragEnabled(True)
         self.qttls.connectToRightClick(self.targetTreeWidget, self.popUpMenuBuilder)
-                    
-                
+        self.targetTreeWidget.itemDoubleClicked.connect(self.itemDblClicked)
+    
+    def itemDblClicked(self, item):
+        label = str(item.text(0))
+        fileFolder = str(item.data(0, QtCore.Qt.UserRole))
+        typ = str(item.data(0, QtCore.Qt.UserRole+1))          
+        self.dblClickFn(label, fileFolder, typ, item)
+    
     def popUpMenuBuilder(self, point):
         menu = self.contextMenuOpenSpace
         self.itm = self.targetTreeWidget.itemAt(point)
@@ -68,7 +80,7 @@ class TreeUIHandler():
                 menu = self.contextMenuDirItems
         else:
             self.itm = self.targetTreeWidget
-        self.qttls.popUpMenu(self.targetTreeWidget, point, menu, self.popUpMenuItemClicked, [self.type, label, fileFolder, typ, self.itm])
+        self.qttls.popUpMenu(self.targetTreeWidget, point, menu, self.menuSelectedFn, [self.type, label, fileFolder, typ, self.itm])
     
     def popUpMenuItemClicked(self, *arg):
         '''

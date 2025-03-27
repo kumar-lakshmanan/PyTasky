@@ -9,14 +9,49 @@
     "reject_connection_types":{}
   },
   "nodes":{
-    "0x23c021fc6d0":{
-      "type_":"nodes.IntInput",
+    "0x270123aadd0":{
+      "type_":"nodeGraphQt.nodes.ConcaterNode",
       "icon":null,
-      "name":"ndIntInput",
+      "name":"MConcat",
       "color":[
-        88,
-        88,
-        88,
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":true,
+      "visible":true,
+      "width":220,
+      "height":81.2,
+      "pos":[
+        153.72519836544532,
+        -105.60220230728282
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x27013282c90":{
+      "type_":"nodeGraphQt.nodes.DisplayerNode",
+      "icon":null,
+      "name":"MConcatDisp",
+      "color":[
+        13,
+        18,
+        23,
         255
       ],
       "border_color":[
@@ -37,17 +72,17 @@
       "width":220,
       "height":80,
       "pos":[
-        -28.107698993056076,
-        194.57890415319136
+        583.7251983654453,
+        -105.60220230728282
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x23c021f8c90":{
-      "type_":"nodes.IntInput",
+    "0x27013281050":{
+      "type_":"nodeGraphQt.nodes.VariableNode",
       "icon":null,
-      "name":"ndIntInput 1",
+      "name":"MyVar1",
       "color":[
         13,
         18,
@@ -72,17 +107,17 @@
       "width":220,
       "height":80,
       "pos":[
-        -261.7615678364482,
-        491.70758333842826
+        -310.7789140950432,
+        -181.51124972035754
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x23c021f9050":{
-      "type_":"nodes.IntOutput",
+    "0x27013280910":{
+      "type_":"nodeGraphQt.nodes.VariableNode",
       "icon":null,
-      "name":"ndIntOutput",
+      "name":"MyVar2",
       "color":[
         13,
         18,
@@ -107,43 +142,8 @@
       "width":220,
       "height":80,
       "pos":[
-        734.7088551549447,
-        484.8705749937955
-      ],
-      "layout_direction":0,
-      "port_deletion_allowed":false,
-      "subgraph_session":{}
-    },
-    "0x23c021f78d0":{
-      "type_":"nodes.Adder",
-      "icon":null,
-      "name":"ndAdder",
-      "color":[
-        13,
-        18,
-        23,
-        255
-      ],
-      "border_color":[
-        74,
-        84,
-        85,
-        255
-      ],
-      "text_color":[
-        255,
-        255,
-        255,
-        180
-      ],
-      "disabled":false,
-      "selected":false,
-      "visible":true,
-      "width":220,
-      "height":81.2,
-      "pos":[
-        335.72244733486446,
-        412.85276797066956
+        -310.7789140950432,
+        8.48875027964246
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
@@ -152,34 +152,52 @@
   },
   "connections":[
     {
-      "out":[
-        "0x23c021fc6d0",
-        "out A"
-      ],
       "in":[
-        "0x23c021f78d0",
-        "in A"
-      ]
-    },
-    {
-      "out":[
-        "0x23c021f8c90",
-        "out A"
+        "0x270123aadd0",
+        "in1"
       ],
-      "in":[
-        "0x23c021f78d0",
-        "in B"
+      "out":[
+        "0x27013281050",
+        "out"
       ]
     },
     {
       "in":[
-        "0x23c021f9050",
-        "in A"
+        "0x270123aadd0",
+        "in2"
       ],
       "out":[
-        "0x23c021f78d0",
-        "out A"
+        "0x27013280910",
+        "out"
+      ]
+    },
+    {
+      "out":[
+        "0x270123aadd0",
+        "out"
+      ],
+      "in":[
+        "0x27013282c90",
+        "in1"
       ]
     }
-  ]
+  ],
+  "nodeProps":{
+    "MConcat":{
+      "Node Name":"MConcat",
+      "ConcaterString":"-"
+    },
+    "MConcatDisp":{
+      "Node Name":"MConcatDisp",
+      "STYLE":"2"
+    },
+    "MyVar1":{
+      "Node Name":"MyVar1",
+      "Value":"45"
+    },
+    "MyVar2":{
+      "Node Name":"MyVar2",
+      "Value":"12"
+    }
+  }
 }

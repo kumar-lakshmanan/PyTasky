@@ -9,7 +9,7 @@
 					"logDateTimeFormat-BCK" : "%Y-%m-%d %I:%M:%S%p",
 					"logDateTimeFormat" : "%Y:%m:%d %I:%M:%S%p",
 					"logFormat": "[%(asctime)s]%(levelname).1s:%(message)s",
-					"logToConsole" : 1,
+					"logToConsole" : 0,
 					"logToFile" : 1,
 					"logFile" : "output.log",
 					"logModuleName" : 0

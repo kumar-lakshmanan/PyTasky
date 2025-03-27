@@ -45,17 +45,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-  </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dckPtsNodes">
    <property name="windowTitle">
@@ -208,6 +197,9 @@
          <widget class="QLineEdit" name="lineEdit">
           <property name="frame">
            <bool>false</bool>
+          </property>
+          <property name="cursorPosition">
+           <number>0</number>
           </property>
           <property name="placeholderText">
            <string>&gt;&gt;&gt; </string>
