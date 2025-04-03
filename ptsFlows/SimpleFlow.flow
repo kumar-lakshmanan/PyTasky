@@ -9,10 +9,10 @@
     "reject_connection_types":{}
   },
   "nodes":{
-    "0x2e9e4c37390":{
-      "type_":"nodeGraphQt.nodes.ConcaterNode",
+    "0x1b98c021710":{
+      "type_":"nodeGraphQt.nodes.Concater",
       "icon":null,
-      "name":"MConcat",
+      "name":"Concater",
       "color":[
         13,
         18,
@@ -37,17 +37,17 @@
       "width":220,
       "height":81.2,
       "pos":[
-        90.75519312505378,
-        -180.91124972035755
+        224.718511892928,
+        314.84108923534495
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x2e9e6322d50":{
-      "type_":"nodeGraphQt.nodes.DisplayerNode",
+    "0x1b98fff8e10":{
+      "type_":"nodeGraphQt.nodes.Displayer",
       "icon":null,
-      "name":"MConcatDisp",
+      "name":"Displayer",
       "color":[
         13,
         18,
@@ -72,17 +72,17 @@
       "width":220,
       "height":80,
       "pos":[
-        520.7551931250538,
-        -180.91124972035755
+        645.313270260003,
+        190.66514957689765
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x2e9e5a558d0":{
-      "type_":"nodeGraphQt.nodes.VariableNode",
+    "0x1b98fff9bd0":{
+      "type_":"nodeGraphQt.nodes.Variable",
       "icon":null,
-      "name":"MyVar1",
+      "name":"Variable",
       "color":[
         13,
         18,
@@ -107,17 +107,17 @@
       "width":220,
       "height":80,
       "pos":[
-        -339.2448068749462,
-        -180.91124972035755
+        -588.0,
+        233.0
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x2e9e6320d50":{
-      "type_":"nodeGraphQt.nodes.VariableNode",
+    "0x1b98fffa790":{
+      "type_":"nodeGraphQt.nodes.Variable",
       "icon":null,
-      "name":"MyVar2",
+      "name":"Variable 1",
       "color":[
         13,
         18,
@@ -142,17 +142,17 @@
       "width":220,
       "height":80,
       "pos":[
-        -339.2448068749462,
-        9.088750279642454
+        -582.0,
+        497.0
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x2e9e63227d0":{
-      "type_":"nodeGraphQt.nodes.MathersNode",
+    "0x1b99000cd50":{
+      "type_":"nodeGraphQt.nodes.Mathers",
       "icon":null,
-      "name":"MMathMul",
+      "name":"Mathers",
       "color":[
         13,
         18,
@@ -177,17 +177,17 @@
       "width":220,
       "height":81.2,
       "pos":[
-        147.68697868485984,
-        2.4153092548579593
+        291.031782152931,
+        506.0
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x2e9e93ddf10":{
-      "type_":"nodeGraphQt.nodes.DisplayerNode",
+    "0x1b99000e690":{
+      "type_":"nodeGraphQt.nodes.Displayer",
       "icon":null,
-      "name":"MMathMulDisp",
+      "name":"Displayer 1",
       "color":[
         13,
         18,
@@ -207,13 +207,13 @@
         180
       ],
       "disabled":false,
-      "selected":true,
+      "selected":false,
       "visible":true,
       "width":220,
       "height":80,
       "pos":[
-        577.6869786848598,
-        2.4153092548579593
+        675.1736640237939,
+        424.17366402379366
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
@@ -223,91 +223,93 @@
   "connections":[
     {
       "in":[
-        "0x2e9e4c37390",
+        "0x1b98c021710",
         "in1"
       ],
       "out":[
-        "0x2e9e5a558d0",
+        "0x1b98fff9bd0",
         "out"
       ]
     },
     {
       "in":[
-        "0x2e9e4c37390",
+        "0x1b98c021710",
         "in2"
       ],
       "out":[
-        "0x2e9e6320d50",
+        "0x1b98fffa790",
         "out"
       ]
     },
     {
       "out":[
-        "0x2e9e4c37390",
+        "0x1b98c021710",
         "out"
       ],
       "in":[
-        "0x2e9e6322d50",
+        "0x1b98fff8e10",
         "in1"
       ]
     },
     {
       "out":[
-        "0x2e9e5a558d0",
+        "0x1b98fff9bd0",
         "out"
       ],
       "in":[
-        "0x2e9e63227d0",
+        "0x1b99000cd50",
+        "in1"
+      ]
+    },
+    {
+      "out":[
+        "0x1b98fffa790",
+        "out"
+      ],
+      "in":[
+        "0x1b99000cd50",
         "in2"
       ]
     },
     {
       "out":[
-        "0x2e9e6320d50",
+        "0x1b99000cd50",
         "out"
       ],
       "in":[
-        "0x2e9e63227d0",
-        "in1"
-      ]
-    },
-    {
-      "out":[
-        "0x2e9e63227d0",
-        "out"
-      ],
-      "in":[
-        "0x2e9e93ddf10",
+        "0x1b99000e690",
         "in1"
       ]
     }
   ],
   "nodeProps":{
-    "MConcat":{
-      "Node Name":"MConcat",
+    "Concater":{
       "ConcaterString":"-"
     },
-    "MConcatDisp":{
-      "Node Name":"MConcatDisp",
-      "STYLE":"2"
+    "Displayer":{
+      "STYLE":"1"
     },
-    "MyVar1":{
-      "Node Name":"MyVar1",
-      "Value":"45"
-    },
-    "MyVar2":{
-      "Node Name":"MyVar2",
+    "Variable":{
+      "Node Name":"Variable",
+      "Node Script":"default",
       "Value":"12"
     },
-    "MMathMul":{
-      "Node Name":"MMathMul",
-      "ADD":"0",
+    "Variable 1":{
+      "Node Name":"Variable 1",
+      "Node Script":"default",
+      "Value":"23"
+    },
+    "Mathers":{
+      "Node Name":"Mathers",
+      "Node Script":"default",
+      "ADD":"1",
       "SUB":"0",
-      "MUL":"1",
+      "MUL":"0",
       "DIV":"0"
     },
-    "MMathMulDisp":{
-      "Node Name":"MMathMulDisp",
+    "Displayer 1":{
+      "Node Name":"Displayer 1",
+      "Node Script":"default",
       "STYLE":"1"
     }
   }

@@ -1,28 +1,57 @@
 #PyTasky#
 
-Still in progress...
+Development still in progress...
 
-Aim is to build a robust python based handy tool to help automate almost any operations. 
-- From simple excel automation to complex AI model upgrades, or any automation.
-- Making all the complexity simplified and allowing the users to build their tools and process simplified.
-- Helps users to build thier custom tools with simple drag drop & simple customization actions. Allowing them to achive any generic task.
-- Additionally, Provide a vast open space to build the extreme advance features to support the end users to performe thier customization.
-- Cover almost any automation that python can possibly do.
-- With almost zero complexity of installation. deployment. configuration etc. 
+# **PyTasky: The Next-Gen No-Code/Low-Code/Pro-Code Automation Powerhouse**  
+
+PyTasky is an **Hyper-flexible automation platform** that empowers businesses and enterprises to rapidly **design, develop, and deploy** custom tools with minimal effort. Whether it’s streamlining complex workflows, optimizing processes, or integrating with enterprise ecosystems, PyTasky transforms automation into an intuitive, drag-and-drop experience.  
+
+## 🚀 **Limitless Customization & Extensibility**  
+Built with **Python and PyQt**, PyTasky offers an ultra-modular, **plug-and-play architecture** that evolves with user needs. Users can create, reconfigure, and extend automation flows dynamically—no deep coding expertise required.  
+
+## ⚙️ **Powerful Node-Based Workflow Engine**  
+With a **vast library of pre-built automation nodes**, users can visually connect, customize, and orchestrate tasks seamlessly. PyTasky also enables deep customization, allowing users to build their own nodes, define custom logic, and craft tailored solutions at scale.  
+
+## 💡 **Enterprise-Grade Automation—Simplified**  
+From **Excel automation** to **AI model operations**, PyTasky democratizes automation, making it accessible for both non-tech users and seasoned developers. No more manual scripting—just intuitive, **drag-and-drop automation with rapid deployment**.  
+
+---
+
+## **Unparalleled Capabilities Across Domains**  
+
+✅ **Business Process Automation** – Streamline repetitive tasks and workflows  
+✅ **Data Handling & Transformation** – Process, clean, and orchestrate structured & unstructured data  
+✅ **DevOps & CI/CD Automation** – Automate infra, environment setup, and deployment pipelines  
+✅ **Testing & QA Automation** – Simplify test execution, validation, and reporting  
+✅ **Web Scraping & API Integration** – Extract data, consume APIs, and integrate with third-party services  
+✅ **AI/ML & Chatbot Operations** – Manage AI/ML models, pipelines, and chatbot flows  
+✅ **IoT & Embedded Systems** – Seamlessly integrate with Arduino, ESP32, and more  
+✅ **Enterprise App Integration** – Connect with **JIRA, GitHub, ServiceNow, Confluence, GitLab, and more**  
+✅ **Zero-Complexity Deployment** – No tedious setup—just plug, play, and automate  
+
+---
+
+## **Why PyTasky?**  
+🔹 **No-Code Simplicity + Pro-Code Flexibility**  
+🔹 **Enterprise-Ready Scalability**  
+🔹 **Future-Proof Extensibility**  
+🔹 **End-to-End Automation for Any Use Case**  
+
+Say goodbye to manual complexity and hello to **intelligent, scalable automation**. With PyTasky, **if Python can do it, PyTasky can do it—faster, smarter, and with zero friction**.  
+
+🚀 **Redefine automation. Supercharge productivity. Scale effortlessly with PyTasky.**
+
 
 ![PyTasky](https://github.com/kumar-lakshmanan/PyTasky/blob/main/image1.png?raw=true "PyTasky")
+![PyTasky](https://github.com/kumar-lakshmanan/PyTasky/blob/main/image2.png?raw=true "PyTasky")
 
-Eg:
- - Task automation, Scheduling, Web scrapping, Web Service
- - Data handling, Data cleanup.
- - AI data modeling.
- - Custom process automation.  
 
 
 **DEPENDENCY**
 * kpylib - My Lib
 * [NodeGraphQt](https://jchanvfx.github.io/NodeGraphQt)
 * Qt.py>=1.3.0
+* AHK
 
 ### InProgress ###
 * ~~UI - Node listing based on file~~
@@ -40,4 +69,20 @@ Eg:
 * clean/structurize node modules
 * dynmaic modules
 * error handling
+
+
+
+### TODO - IDEAS ###
+* connectors
+* django 
+* command line exec
+* sub flow
+* webscrabing - page data
+* aws connector
+* ai integerate video audio data generator
+* compile as exec
+* auto hot key
+* seleinum integerate
+
+
 	

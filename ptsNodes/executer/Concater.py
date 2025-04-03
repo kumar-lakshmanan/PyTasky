@@ -13,7 +13,7 @@ OUTPUTS = [ ("out",1) ]
 PROPS = {}
 PROPS["ConcaterString"] = "-"
 
-def action(request={}):
+def ACTION(request):
     tls.info(f"Action Started {NAME}")
     output = request['in1'] + request['in2']
     return {'out': output}

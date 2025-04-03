@@ -116,7 +116,7 @@ class TreeUIHandler():
     def loadTree(self):
         self.targetTreeWidget.clear()    
         scriptsPath = self.filePath
-        self.tls.info(f'Loading {self.type}(s)...')
+        self.tls.info(f'Populating {self.type}(s)...')
         for eachItem in os.listdir(scriptsPath):
             currentDirName = eachItem
             currentDirPath = os.path.join(scriptsPath,currentDirName)
@@ -130,7 +130,7 @@ class TreeUIHandler():
                     self.populateCore(rItem, currentDirPath)
                 else:
                     self.createScriptItem(currentDirPath)                            
-        self.tls.info(f"{self.type}(s) Loaded!")
+        self.tls.info(f"{self.type}(s) Populated!")
                                                 
     def populateCore(self, parentItem, searchPath):                              
         for eachItem in os.listdir(searchPath):

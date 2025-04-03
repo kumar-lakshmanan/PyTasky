@@ -39,6 +39,8 @@ class PTSConsole(object):
         
         self.tls.info('Initializing custom python interpreter...')       
         self.console = self.tls.console
+        self.console.updateLocals('PTS',self.PTS)
+        self.console.updateLocals('PTS_UI',self.PTS.ui)
         
         self.grabStdOut()
         

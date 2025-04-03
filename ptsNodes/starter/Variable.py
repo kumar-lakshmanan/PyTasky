@@ -14,7 +14,7 @@ OUTPUTS = [ ("out",1) ]
 PROPS = {}
 PROPS["Value"] = "Some Value"
 
-def action(request={}):
+def ACTION(request):
     tls.info(f"Action Started {NAME}")  
     return {'out' : PROPS["Value"]}
 

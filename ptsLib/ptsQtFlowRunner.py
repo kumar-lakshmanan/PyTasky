@@ -8,6 +8,7 @@ import os, sys, time, json
 from PyQt5 import QtCore, QtWidgets
 import code
 import kTools
+from PyQt5.uic import loadUi
 
 class PTSQtFlowRunner(QtCore.QThread):
     """
@@ -16,11 +17,14 @@ class PTSQtFlowRunner(QtCore.QThread):
     """
     
     flowExecutionCompleted = QtCore.pyqtSignal(str)
-    flowupdate = QtCore.pyqtSignal(str)
-    nodeinprogress = QtCore.pyqtSignal(str)
+    flowExecutionStatus = QtCore.pyqtSignal(str)
+    nodeExecutionInprogress = QtCore.pyqtSignal(str)
+    executeUINodeAction = QtCore.pyqtSignal(object, object, object)
     
     def __init__(self):        
         super().__init__()
+        self.PTS = None            
+        self.PTS_UI = None        
         self.paused = False  # Pause flag
         self.running = True  # Stop flag
         self.mutex = QtCore.QMutex()
@@ -39,14 +43,13 @@ class PTSQtFlowRunner(QtCore.QThread):
         paths.append("G:/pyworkspace/PyTasky/ptsNodes/starter")
         paths.append("G:/pyworkspace/PyTasky/ptsScripts")
         
-        self.flowupdate.emit('Flow Started')
+        self.flowExecutionStatus.emit('Flow Started')
         self.console.cleanAndUpdateSysPaths(paths) 
         
         self.flowFile = None
         
-        self.debugMode = 0
-        
-    
+        self.debugMode = 0            
+
     def preSetup(self):
         self.tls.info(f'Scanning flow {self.flowFile}')
         
@@ -84,36 +87,38 @@ class PTSQtFlowRunner(QtCore.QThread):
             self.tls.debug(f'Fetching node {name} info...')
 
         #Scan Connection
-        for each in flowData["connections"]:
-            fromNodeId = each['out'][0]
-            fromPortName = each['out'][1]
-            fromNodeName = self.getNodeById(fromNodeId)['name']   
-            toNodeId = each['in'][0]
-            toNodeName = self.getNodeById(toNodeId)['name']   
-            toPortName = each['in'][1]
-            if not fromPortName in self.nodes[fromNodeName]['connectedop'].keys():  
-                self.nodes[fromNodeName]['connectedop'][fromPortName]=[]
-            if not toPortName in self.nodes[toNodeName]['connectedip'].keys():  
-                self.nodes[toNodeName]['connectedip'][toPortName]=[]
-            self.nodes[fromNodeName]['connectedop'][fromPortName].append((toNodeName, toPortName))
-            self.nodes[toNodeName]['connectedip'][toPortName].append((fromNodeName, fromPortName))
-
-            self.tls.debug(f'Fetching connection info {fromNodeName}.{fromPortName} -> {toNodeName}.{toPortName}')
+        if "connections" in flowData:
+            for each in flowData["connections"]:
+                fromNodeId = each['out'][0]
+                fromPortName = each['out'][1]
+                fromNodeName = self.getNodeById(fromNodeId)['name']   
+                toNodeId = each['in'][0]
+                toNodeName = self.getNodeById(toNodeId)['name']   
+                toPortName = each['in'][1]
+                if not fromPortName in self.nodes[fromNodeName]['connectedop'].keys():  
+                    self.nodes[fromNodeName]['connectedop'][fromPortName]=[]
+                if not toPortName in self.nodes[toNodeName]['connectedip'].keys():  
+                    self.nodes[toNodeName]['connectedip'][toPortName]=[]
+                self.nodes[fromNodeName]['connectedop'][fromPortName].append((toNodeName, toPortName))
+                self.nodes[toNodeName]['connectedip'][toPortName].append((fromNodeName, fromPortName))
+    
+                self.tls.debug(f'Fetching connection info {fromNodeName}.{fromPortName} -> {toNodeName}.{toPortName}')
             
         #Scan Props
-        for each in flowData["nodeProps"]:
-            nd = flowData["nodeProps"][each]
-            tmp_ = nd.pop("Node Name") if "Node Name" in nd else ''
-            self.nodes[each]['props'] = nd
-            self.tls.debug(f'Fetching props info {nd}')
+        if "nodeProps" in flowData:
+            for each in flowData["nodeProps"]:
+                nd = flowData["nodeProps"][each]
+                tmp_ = nd.pop("Node Name") if "Node Name" in nd else ''            
+                self.nodes[each]['props'] = nd
+                self.nodes[each]['props']['Node Script'] = nd['Node Script'] if 'Node Script' in nd else 'default'
+                self.tls.debug(f'Fetching props info {nd}')
             
         self.tls.info('PreSetup Completed!')
-        
-        
+
     def run(self):
         #---------------------------------------------------
         self.tls.info(f'-----Starting flow execution-----')
-        self.flowupdate.emit(f'Executing the flow...')
+        self.flowExecutionStatus.emit(f'Executing the flow...')
 
         self.currentExecutionNodes = []
         self.nodeInputs = {}          
@@ -126,14 +131,14 @@ class PTSQtFlowRunner(QtCore.QThread):
             ttl = len(self.currentExecutionNodes)                  
             
             currentNode = self.currentExecutionNodes.pop()
-            self.flowupdate.emit(f'{cnt}/{ttl} Node to be processed.... {currentNode["name"]}')
-            self.nodeinprogress.emit(f'{currentNode["name"]}')
+            self.flowExecutionStatus.emit(f'{cnt}/{ttl} Node to be processed.... {currentNode["name"]}')
+            self.nodeExecutionInprogress.emit(f'{currentNode["name"]}')
             
             #-------Thread Hold and Resume OnDemand - For Debugging------
             if self.debugMode: self.pause()
             self.mutex.lock()
             while self.paused:
-                #print("Flow waiting for debugging")
+                #"Flow waiting for debugging
                 self.condition.wait(self.mutex)
             self.mutex.unlock()       
             if not self.running: break
@@ -142,7 +147,7 @@ class PTSQtFlowRunner(QtCore.QThread):
             #Step 1: Is IP Ready for Processing this Node
             if not self.isInputReadyForNode(currentNode):
                 self.currentExecutionNodes.insert(0,currentNode)
-                self.flowupdate.emit(f"{cnt}/{ttl} PushBack node, Input not yet ready for this.... {currentNode['name']}")
+                self.flowExecutionStatus.emit(f"{cnt}/{ttl} PushBack node, Input not yet ready for this.... {currentNode['name']}")
                 continue
             
             inputForNode = self.getInputForNode(currentNode)
@@ -160,9 +165,8 @@ class PTSQtFlowRunner(QtCore.QThread):
                     self.currentExecutionNodes.append(eachNextNode)
                     
         self.flowExecutionCompleted.emit(None)
-        self.flowupdate.emit(f'-----Flow execution completed successfully!-----')
+        self.flowExecutionStatus.emit(f'-----Flow execution completed successfully!-----')
         
-
     def pause(self):
         """Pause execution"""
         self.paused = True
@@ -180,8 +184,7 @@ class PTSQtFlowRunner(QtCore.QThread):
     def stop(self):
         """Stop execution"""
         self.running = False
-        self.resume()  # Ensure thread exits
-        
+        self.resume()  # Ensure thread exits        
             
     def verifyAndSaveNodeOutput(self, node, output):
         #{'id': '0x180c937c250', 'name': 'Variable', 'modname': 'VariableCore', 'module': <module 'VariableCore' from 'G:\\pyworkspace\\PyTasky\\ptsNodes\\starter\\VariableCore.py'>, 'actualip': [], 'actualop': [('out', 1)], 'connectedip': {}, 'connectedop': {'out': ('Mathers', 'in1')}, 'type': 'STARTER', 'props': {'Value': 'Some Value'}}        
@@ -198,27 +201,61 @@ class PTSQtFlowRunner(QtCore.QThread):
                 return True
             
     def executeNode(self, node, request):
-        mod = node['module']
-        mod.NAME = node['name']
-        mod.PROPS = node['props']
-        output = mod.action(request)
-        return output
+        modToExecute = None
+       
+        if 'Node Script' in node['props'] and node['props']['Node Script'] != 'default':            
+            nodescript = node['props']['Node Script']
+            self.tls.debug(f"Executing custom node script for {node['name']} - {nodescript}")
+            customModule = self.console.getModule(nodescript)
+            customModule.NAME = node['name']
+            customModule.PROPS = node['props']
+            if hasattr(customModule, 'ACTION'):
+                modToExecute = customModule
+            else:
+                self.tls.error(f"Custom module [ {customModule}] has no fn named ACTION.")
+                output = {}
+        else:
+            defaultMod = node['module']
+            defaultMod.NAME = node['name']
+            defaultMod.PROPS = node['props']
+            defaultMod.PTS = self.PTS
+            modToExecute = defaultMod            
+
+        
+        #--------------------------------------------------
+        
+        response = {}      
+        try:
+            #ui nodes are little tricky, they should exceute in main window only. not in thread
+            #so we emit signal to them and they will execute. and call back our method. 
+            #that method will grab the result and set as output. 
+            #we will wait till the ui window get closed in node execution and will wait till we get a call back invoked.
+            if "ISUI" in dir(modToExecute) and modToExecute.ISUI:
+                def resultReadyFn(result):
+                    nonlocal response
+                    response.update(result)
+                    loop.quit()
+                loop = QtCore.QEventLoop()
+                self.executeUINodeAction.emit(modToExecute, request, resultReadyFn)
+                loop.exec_()
+            else:                        
+                response = modToExecute.ACTION(request)
+        except Exception as e:
+            print("-------Error executing node-----")
+            print(e)
+            print("-------Error executing node-----")
+        
+        return response
             
     def getNextNodes(self, node):
         nextNodes = []
         outputConnections = node['connectedop']
-        # for eachOutputPort in outputConnections.keys():
-        #     nextNodeName = outputConnections[eachOutputPort][0]
-        #     nextNodes.append( self.getNodeByName(nextNodeName) )
-        # return nextNodes
-
         for eachOutputPort in outputConnections.keys():
             for eachConnection in outputConnections[eachOutputPort]:
                 connectedNodeName = eachConnection[0]
                 connectedNodePort = eachConnection[1]
                 nextNodes.append( self.getNodeByName(connectedNodeName) )
         return nextNodes
-
             
     def getInputForNode(self, node):
         '''
@@ -310,7 +347,6 @@ class PTSQtFlowRunner(QtCore.QThread):
         tag = self.getOutputTag(nodeName, portName)
         return tag in self.nodesOutputData
         
-
 if __name__ == "__main__":
 
     d = """

@@ -16,10 +16,10 @@ INPUTS = [ "in1" ]
 PROPS = {}
 PROPS["STYLE"] = "1"
 
-def action(request={}):
+def ACTION(request):
     tls.info(f"Action Started {NAME}")
     
-    in1 = int(request["in1"])
+    in1 = request["in1"] 
     
     if PROPS['STYLE'] == "1":
         tls.info(f"[Disp]: {in1}]]")

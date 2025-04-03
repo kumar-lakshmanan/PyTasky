@@ -27,16 +27,21 @@ class PTSFlowRunner(object):
 
         self.console.cleanAndUpdateSysPaths(paths)  
         
-    def executeFlow(self, flowFile = "TEST2.FLOW"):
-        self.tls.info(f'Scanning flow... {flowFile}')
+        self.flowFile = None
+        
+
+        
+    
+    def preSetup(self):
+        self.tls.info(f'Scanning flow {self.flowFile}')
         
         self.nodes = {}
         self.starterNodes = []        
         
         self.currentExecutionNodes = []
         self.nodesOutputData = {}        
-        
-        flowStrData = self.tls.getFileContent(flowFile)
+
+        flowStrData = self.tls.getFileContent(self.flowFile)
         flowData = json.loads(flowStrData)
                         
         #Scan Nodes
@@ -60,29 +65,41 @@ class PTSFlowRunner(object):
             self.nodes[name]['connectedop'] = {}
             self.nodes[name]['type'] = self.determineNodeType(self.nodes[name]['actualip'], self.nodes[name]['actualop'])
             if self.nodes[name]['type'] == "STARTER": self.starterNodes.append(self.nodes[name])
+
             self.tls.debug(f'Fetching node {name} info...')
 
         #Scan Connection
-        for each in flowData["connections"]:
-            fromNodeId = each['out'][0]
-            fromPortName = each['out'][1]
-            fromNodeName = self.getNodeById(fromNodeId)['name']   
-            toNodeId = each['in'][0]
-            toNodeName = self.getNodeById(toNodeId)['name']   
-            toPortName = each['in'][1]  
-            self.nodes[fromNodeName]['connectedop'][fromPortName] = (toNodeName, toPortName)
-            self.nodes[toNodeName]['connectedip'][toPortName] = (fromNodeName, fromPortName)
-            self.tls.debug(f'Fetching connection info {fromNodeName}.{fromPortName} -> {toNodeName}.{toPortName}')
+        if "connections" in flowData:
+            for each in flowData["connections"]:
+                fromNodeId = each['out'][0]
+                fromPortName = each['out'][1]
+                fromNodeName = self.getNodeById(fromNodeId)['name']   
+                toNodeId = each['in'][0]
+                toNodeName = self.getNodeById(toNodeId)['name']   
+                toPortName = each['in'][1]
+                if not fromPortName in self.nodes[fromNodeName]['connectedop'].keys():  
+                    self.nodes[fromNodeName]['connectedop'][fromPortName]=[]
+                if not toPortName in self.nodes[toNodeName]['connectedip'].keys():  
+                    self.nodes[toNodeName]['connectedip'][toPortName]=[]
+                self.nodes[fromNodeName]['connectedop'][fromPortName].append((toNodeName, toPortName))
+                self.nodes[toNodeName]['connectedip'][toPortName].append((fromNodeName, fromPortName))
+    
+                self.tls.debug(f'Fetching connection info {fromNodeName}.{fromPortName} -> {toNodeName}.{toPortName}')
             
         #Scan Props
-        for each in flowData["nodeProps"]:
-            nd = flowData["nodeProps"][each]
-            tmp_ = nd.pop("Node Name") if "Node Name" in nd else ''
-            self.nodes[each]['props'] = nd
-            self.tls.debug(f'Fetching props info {nd}')
-
+        if "nodeProps" in flowData:
+            for each in flowData["nodeProps"]:
+                nd = flowData["nodeProps"][each]
+                tmp_ = nd.pop("Node Name") if "Node Name" in nd else ''            
+                self.nodes[each]['props'] = nd
+                self.nodes[each]['props']['Node Script'] = nd['Node Script'] if 'Node Script' in nd else 'default'
+                self.tls.debug(f'Fetching props info {nd}')
+            
+        self.tls.info('PreSetup Completed!')
+                
+    def run(self):
         #---------------------------------------------------
-        self.tls.info(f'-----Data prepared, Flow Ready for execution-----')
+        self.tls.info(f'-----Starting flow execution-----')
         self.tls.debug(f'Executing the flow...')
 
         self.currentExecutionNodes = []
@@ -90,15 +107,19 @@ class PTSFlowRunner(object):
         
         self.currentExecutionNodes = self.starterNodes        
         self.currentExecutionNodes.reverse()
-                
-        while len(self.currentExecutionNodes):
+        cnt = 0        
+        while len(self.currentExecutionNodes):                       
+            cnt = cnt + 1
+            ttl = len(self.currentExecutionNodes)                  
+            
             currentNode = self.currentExecutionNodes.pop()
-            self.tls.debug(f'Processing node.... {currentNode["name"]}')
-             
+            self.tls.debug(f'{cnt}/{ttl} Node to be processed.... {currentNode["name"]}')
+
+            
             #Step 1: Is IP Ready for Processing this Node
             if not self.isInputReadyForNode(currentNode):
                 self.currentExecutionNodes.insert(0,currentNode)
-                self.tls.debug('PushBack node, Input not yet ready.... ', currentNode['name'])
+                self.tls.debug(f"{cnt}/{ttl} PushBack node, Input not yet ready for this.... {currentNode['name']}")
                 continue
             
             inputForNode = self.getInputForNode(currentNode)
@@ -114,6 +135,9 @@ class PTSFlowRunner(object):
             for eachNextNode in nextNodes:
                 if not eachNextNode in self.currentExecutionNodes:
                     self.currentExecutionNodes.append(eachNextNode)
+
+        self.tls.debug(f'-----Flow execution completed successfully!-----')
+
             
     def verifyAndSaveNodeOutput(self, node, output):
         #{'id': '0x180c937c250', 'name': 'Variable', 'modname': 'VariableCore', 'module': <module 'VariableCore' from 'G:\\pyworkspace\\PyTasky\\ptsNodes\\starter\\VariableCore.py'>, 'actualip': [], 'actualop': [('out', 1)], 'connectedip': {}, 'connectedop': {'out': ('Mathers', 'in1')}, 'type': 'STARTER', 'props': {'Value': 'Some Value'}}        
@@ -130,30 +154,53 @@ class PTSFlowRunner(object):
                 return True
             
     def executeNode(self, node, request):
-        mod = node['module']
-        mod.PROPS = node['props']
-        output = mod.action(request)
+        defaultMod = node['module']
+       
+        if 'Node Script' in node['props'] and node['props']['Node Script'] != 'default':            
+            nodescript = node['props']['Node Script']
+            self.tls.debug(f"Executing custom node script for {node['name']} - {nodescript}")
+            customModule = self.console.getModule(nodescript)
+            customModule.NAME = node['name']
+            customModule.PROPS = node['props']
+            if hasattr(customModule, 'ACTION'):
+                output = customModule.ACTION(request)
+            else:
+                self.tls.error(f"Custom module [ {customModule}] has no fn named ACTION.")
+                output = {}
+        else:
+            defaultMod.NAME = node['name']
+            defaultMod.PROPS = node['props']            
+            output = defaultMod.ACTION(request)
+        
         return output
             
     def getNextNodes(self, node):
         nextNodes = []
         outputConnections = node['connectedop']
         for eachOutputPort in outputConnections.keys():
-            nextNodeName = outputConnections[eachOutputPort][0]
-            nextNodes.append( self.getNodeByName(nextNodeName) )
+            for eachConnection in outputConnections[eachOutputPort]:
+                connectedNodeName = eachConnection[0]
+                connectedNodePort = eachConnection[1]
+                nextNodes.append( self.getNodeByName(connectedNodeName) )
         return nextNodes
             
     def getInputForNode(self, node):
+        '''
+        Get Consolidated Inputs for executing the node
+        '''
         input = {}
         if node['type'] == 'STARTER': return input
         nodeName = node['name']
-        inps = node['connectedip']
-        for eachInp in inps:
-            currentPortName = eachInp
-            srcNode = inps[currentPortName][0]
-            srcNodePort = inps[currentPortName][1]
-            currentPortData = self.getNodeOutput(srcNode, srcNodePort)
-            input[currentPortName] = currentPortData
+        connectedIps = node['connectedip']
+
+        for eachIPPort in connectedIps:
+            connectionsInCurrntPort = connectedIps[eachIPPort]
+            for eachConn in connectionsInCurrntPort:
+                connectedNodeName = eachConn[0]
+                connectedPortName = eachConn[1]
+                data = self.getNodeOutput(connectedNodeName, connectedPortName)        
+                input[eachIPPort] = data
+        
         return input
         
     def isInputReadyForNode(self, node):
@@ -163,11 +210,13 @@ class PTSFlowRunner(object):
         '''
 
         if node['type'] == 'STARTER': return True
-        connectedIp = node['connectedip']
-        connections = list(connectedIp.values())
-        for eachConnection in connections:
-            if not self.isNodeOutputAvailable(eachConnection[0], eachConnection[1]):
-                return False
+        connectedIps = node['connectedip']
+        for eachIPPort in connectedIps:
+            connectionsInCurrntPort = connectedIps[eachIPPort]
+            for eachConn in connectionsInCurrntPort:
+                connectedNodeName = eachConn[0]
+                connectedPortName = eachConn[1]
+                if not self.isNodeOutputAvailable(connectedNodeName, connectedPortName): return False
         return True
                         
     def getOutputPortName(self, opObj):
@@ -225,7 +274,6 @@ class PTSFlowRunner(object):
         tag = self.getOutputTag(nodeName, portName)
         return tag in self.nodesOutputData
         
-
 if __name__ == "__main__":
 
     d = """
