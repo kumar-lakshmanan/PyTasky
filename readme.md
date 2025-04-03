@@ -19,9 +19,9 @@ From **Excel automation** to **AI model operation support**, PyTasky democratize
 
 ✅ **Business Process Automation** – Streamline repetitive tasks and workflows  
 ✅ **Data Handling & Transformation** – Process, clean, and orchestrate structured & unstructured data  
-✅ **Data Analysis & Graphing** – Trade data, Graph drafting. Simple data visualizing 
+✅ **Data Analysis & Graphing** – Trade data, Graph drafting. Simple data visualizing  
 ✅ **DevOps & CI/CD Automation** – Automate infra, environment setup, and deployment pipelines  
-✅ **Dockers / K8s Supporting** – Command docker & k8s apps. Automate visually.
+✅ **Dockers / K8s Supporting** – Command docker & k8s apps. Automate visually. 
 ✅ **Testing & QA Automation** – Simplify test execution, validation, and reporting  
 ✅ **Web Scraping & API Integration** – Extract data, consume APIs, and integrate with third-party services  
 ✅ **AI/ML & Chatbot Operations** – Manage AI/ML models, pipelines, and chatbot flows  
@@ -36,11 +36,11 @@ From **Excel automation** to **AI model operation support**, PyTasky democratize
 🔹 **Enterprise-Ready Scalability**  
 🔹 **Future-Proof Extensibility**  
 🔹 **End-to-End Automation for Any Use Case**  
-
+  
 Say goodbye to manual complexity and hello to **intelligent, scalable automation**. With PyTasky, **if Python can do it, PyTasky can do it—faster, smarter, and with zero friction**.  
-
+  
 🚀 **Redefine automation. Supercharge productivity. Scale effortlessly with PyTasky.**
-
+  
 ---
 
 ![PyTasky](https://github.com/kumar-lakshmanan/PyTasky/blob/main/image1.png?raw=true "PyTasky")
@@ -48,7 +48,7 @@ Say goodbye to manual complexity and hello to **intelligent, scalable automation
 
 ---
 
-**DEPENDENCY**
+**So far DEPENDENCY**
 * kpylib - Internal
 * PyQt5
 * Qt.py>=1.3.0
@@ -72,9 +72,10 @@ Say goodbye to manual complexity and hello to **intelligent, scalable automation
 * clean/structurize node modules
 * ~~dynmaic modules~~
 * error handling
+* Compile to desktop app
 
 
-### TODO - IDEAS ###
+### planned todos (ideas) ###
 * connectors
 * django 
 * sqlite, mongodb
@@ -86,6 +87,6 @@ Say goodbye to manual complexity and hello to **intelligent, scalable automation
 * compile as exec
 * auto hot key
 * seleinum integerate
-
+* web interface
 
 	
