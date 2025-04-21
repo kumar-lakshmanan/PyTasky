@@ -9,7 +9,7 @@
     "reject_connection_types":{}
   },
   "nodes":{
-    "0x20565121d10":{
+    "0x206d2b65850":{
       "type_":"nodeGraphQt.nodes.Variable",
       "icon":null,
       "name":"Variable",
@@ -37,14 +37,154 @@
       "width":220,
       "height":80,
       "pos":[
-        -166.86691896143827,
-        193.99725462308248
+        -503.98637914470714,
+        307.09812467321507
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x20565118410":{
+    "0x206d6215410":{
+      "type_":"nodeGraphQt.nodes.Loop",
+      "icon":null,
+      "name":"Loop",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":80,
+      "pos":[
+        65.29703861641427,
+        365.0799415919063
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x206d6217ad0":{
+      "type_":"nodeGraphQt.nodes.Displayer",
+      "icon":null,
+      "name":"Last Display",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":80,
+      "pos":[
+        689.0593401806808,
+        330.00684290658
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x206d6258750":{
+      "type_":"nodeGraphQt.nodes.Displayer",
+      "icon":null,
+      "name":"LoopDisplay",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":false,
+      "visible":true,
+      "width":220,
+      "height":80,
+      "pos":[
+        734.9968138612747,
+        141.25901817786743
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x206d62590d0":{
+      "type_":"nodeGraphQt.nodes.Concater",
+      "icon":null,
+      "name":"Concater",
+      "color":[
+        13,
+        18,
+        23,
+        255
+      ],
+      "border_color":[
+        74,
+        84,
+        85,
+        255
+      ],
+      "text_color":[
+        255,
+        255,
+        255,
+        180
+      ],
+      "disabled":false,
+      "selected":true,
+      "visible":true,
+      "width":220,
+      "height":81.2,
+      "pos":[
+        218.6238233092531,
+        107.82466735122969
+      ],
+      "layout_direction":0,
+      "port_deletion_allowed":false,
+      "subgraph_session":{}
+    },
+    "0x206d6259f50":{
       "type_":"nodeGraphQt.nodes.Variable",
       "icon":null,
       "name":"Variable 1",
@@ -72,78 +212,8 @@
       "width":220,
       "height":80,
       "pos":[
-        -181.37172905432374,
-        493.83475545161446
-      ],
-      "layout_direction":0,
-      "port_deletion_allowed":false,
-      "subgraph_session":{}
-    },
-    "0x20565119550":{
-      "type_":"nodeGraphQt.nodes.Displayer",
-      "icon":null,
-      "name":"Displayer",
-      "color":[
-        13,
-        18,
-        23,
-        255
-      ],
-      "border_color":[
-        74,
-        84,
-        85,
-        255
-      ],
-      "text_color":[
-        255,
-        255,
-        255,
-        180
-      ],
-      "disabled":false,
-      "selected":false,
-      "visible":true,
-      "width":220,
-      "height":80,
-      "pos":[
-        1072.6997535387675,
-        324.23426252914874
-      ],
-      "layout_direction":0,
-      "port_deletion_allowed":false,
-      "subgraph_session":{}
-    },
-    "0x20565118310":{
-      "type_":"nodeGraphQt.nodes.Mathers",
-      "icon":null,
-      "name":"Mathers",
-      "color":[
-        13,
-        18,
-        23,
-        255
-      ],
-      "border_color":[
-        74,
-        84,
-        85,
-        255
-      ],
-      "text_color":[
-        255,
-        255,
-        255,
-        180
-      ],
-      "disabled":false,
-      "selected":false,
-      "visible":true,
-      "width":220,
-      "height":81.2,
-      "pos":[
-        608.0,
-        376.0
+        -305.4863343445021,
+        0.1347571492568278
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
@@ -153,31 +223,51 @@
   "connections":[
     {
       "out":[
-        "0x20565121d10",
+        "0x206d2b65850",
         "out"
       ],
       "in":[
-        "0x20565118310",
-        "in1"
+        "0x206d6215410",
+        "inpList"
       ]
     },
     {
       "out":[
-        "0x20565118410",
+        "0x206d2b65850",
         "out"
       ],
       "in":[
-        "0x20565118310",
+        "0x206d62590d0",
         "in2"
       ]
     },
     {
+      "out":[
+        "0x206d6215410",
+        "out"
+      ],
       "in":[
-        "0x20565119550",
+        "0x206d6217ad0",
+        "in"
+      ]
+    },
+    {
+      "in":[
+        "0x206d6258750",
         "in"
       ],
       "out":[
-        "0x20565118310",
+        "0x206d62590d0",
+        "out"
+      ]
+    },
+    {
+      "in":[
+        "0x206d62590d0",
+        "in1"
+      ],
+      "out":[
+        "0x206d6259f50",
         "out"
       ]
     }
@@ -186,24 +276,29 @@
     "Variable":{
       "Node Name":"Variable",
       "Node Script":"default",
-      "Value":"12"
+      "Value":"[\"item1\",\"item2\",\"item3\"]"
+    },
+    "Loop":{
+      "Node Name":"Loop"
+    },
+    "Last Display":{
+      "Node Name":"Last Display",
+      "Node Script":"default",
+      "STYLE":"1"
+    },
+    "LoopDisplay":{
+      "Node Name":"LoopDisplay",
+      "Node Script":"default",
+      "STYLE":"1"
+    },
+    "Concater":{
+      "Node Name":"Concater",
+      "Node Script":"default",
+      "ConcaterString":"#"
     },
     "Variable 1":{
-      "Node Name":"Variable 1",
-      "Node Script":"default",
-      "Value":"20"
-    },
-    "Displayer":{
-      "STYLE":"1",
-      "Node Name":"Displayer"
-    },
-    "Mathers":{
-      "Node Name":"Mathers",
-      "Node Script":"default",
-      "ADD":"1",
-      "SUB":"0",
-      "MUL":"0",
-      "DIV":"0"
+      "Value":"Some Value",
+      "Node Name":"Variable 1"
     }
   }
 }

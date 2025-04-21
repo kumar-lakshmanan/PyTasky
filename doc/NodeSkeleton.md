@@ -13,12 +13,7 @@
 		List of input ports for the node. Port name should be string and less then 10 char for good display.
 		It's optional if its missing, Node will be considered as only output.  
 		<br>
-			
-    * **OUTPUTS** 
-    	List of output port for the node. Port name should be string and less then 10 char for good display.
-	    It's optional if its missing, Node will be considered as only input.  
-		<br>
-			
+
     * **PROPS** 
 		Dict object with name value pair. In which values can be edited in UI. And dict can be used in ACTION fn.  
 		<br>
@@ -45,7 +40,6 @@ NAME = "NODENAME"	#NodeName - Avoid Space & Special Chars
 
 INPUTS = [ "IN-PORT1" , "IN-PORT2" ....  ]
 
-OUTPUTS = [ "OUT-PORT1" , "OUT-PORT2" ....  ]
 
 PROPS = {}
 PROPS["PROP1"] = "1"
@@ -59,7 +53,7 @@ def ACTION(request):
 		
 	#logic
 
-	return {"OUT-PORT1" : your_value}
+	return <output>
 ```
 
 
@@ -80,8 +74,6 @@ NAME = "SimpleConcator"
 
 INPUTS = [ "string1" , "string2"]
 
-OUTPUTS = [ "output" ]
-
 PROPS = {}
 PROPS["ConcatingStr"] = "+"
 
@@ -94,5 +86,5 @@ def ACTION(request):
 	#logic
 	String result = f"{s1}{PROPS["ConcatingStr"]}{s2}"
 
-	return {"output" : result}
+	return result
 ```

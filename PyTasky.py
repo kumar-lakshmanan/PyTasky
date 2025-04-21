@@ -1,7 +1,7 @@
 __appname__ = "PyTasky"
 __author__  = "Kumaresan"
 __created__ = "2025-03-07"
-__updated__ = "2025-04-02"
+__updated__ = "2025-04-20"
 
 import os, sys
 KCONFIG = 'G:/pyworkspace/PyTasky/config.json'
@@ -340,7 +340,7 @@ class core():
     def doFlowsTreeDblClicked(self, label, fileFolder, typ, item):
         if typ == "file":
             self.flows.doLoadFlow(label, fileFolder)
-            self.coreToolBarActionRestricter(2)
+
 
     def doScriptTreeDblClicked(self, label, fileFolder, typ, item):
         if typ == "file":
@@ -367,7 +367,8 @@ class core():
 
     def doExecuteCommandLine(self):
         val = str(self.ui.lineEdit.text()).strip()
-        self.console.runCommand(val)
+        res = self.console.runCommand(val)
+        if res: self.tls.info(res)
         self.ui.lineEdit.setText('')
         self.ui.lineEdit.setFocus()
 
@@ -386,6 +387,22 @@ class core():
         self.tls.info('PyTasky exit actions initiated...')
         self.qttls.uiLayoutSave()
         event.accept()
+
+    def bringConsoleToFocus(self):
+        # Make sure it's visible
+        self.ui.dckPtsStreamOut.show()
+        # Raise it to front
+        self.ui.dckPtsStreamOut.raise_()
+        # Optionally set focus to its child widget
+        self.ui.dckPtsStreamOut.widget().setFocus()
+            
+    def logTextDisplayUpdate(self, text):
+        self.ui.qsciPtsStreamOut.setCursorPosition(self.ui.qsciPtsStreamOut.lines(), 0)
+        self.ui.qsciPtsStreamOut.insertAt(text, self.ui.qsciPtsStreamOut.lines(), 0)
+        vsb = self.ui.qsciPtsStreamOut.verticalScrollBar()
+        vsb.setValue(vsb.maximum())    
+        hsb = self.ui.qsciPtsStreamOut.horizontalScrollBar()
+        hsb.setValue(0)           
 
 if __name__ == "__main__":
 

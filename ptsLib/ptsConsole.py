@@ -33,6 +33,7 @@ class PTSConsole(object):
         self.tls.info('Backup StdOut/Err...')
         self.originalStdOut = sys.stdout 
         self.originalStdErr = sys.stderr
+        self.grabStdOut()
 
         self.tls.info('Adding custom logger...')
         self.tls.addCustomLogPrinter(self.customLogPrinter)
@@ -40,18 +41,16 @@ class PTSConsole(object):
         self.tls.info('Initializing custom python interpreter...')       
         self.console = self.tls.console
         self.console.updateLocals('PTS',self.PTS)
-        self.console.updateLocals('PTS_UI',self.PTS.ui)
-        
-        self.grabStdOut()
         
     def grabStdOut(self):
-        self.tls.info('Redirecting StdOut/Err to Console...')
-        sys.stderr = sys.stdout = self
+        self.tls.debug('Redirecting StdOut/Err to Console...')
+        sys.stdout = self
+        sys.stderr = self
 
     def reset(self):
         sys.stdout = self.originalStdOut
         sys.stderr = self.originalStdErr
-        self.tls.info('StdOut/Err Reverted back to original.')           
+        self.tls.debug('StdOut/Err Reverted back to original.')           
         
     def customLogPrinter(self, msg):
         #This fn is connected to custom log printer.
@@ -59,13 +58,8 @@ class PTSConsole(object):
     
     def write(self, data):
         #To Capture the StdOut/Err Redirects
-        self.parentUi.qsciPtsStreamOut.setCursorPosition(self.parentUi.qsciPtsStreamOut.lines(), 0)
-        self.parentUi.qsciPtsStreamOut.insertAt(data, self.parentUi.qsciPtsStreamOut.lines(), 0)
-        vsb = self.parentUi.qsciPtsStreamOut.verticalScrollBar()
-        vsb.setValue(vsb.maximum())    
-        hsb = self.parentUi.qsciPtsStreamOut.horizontalScrollBar()
-        hsb.setValue(0)   
-    
+        self.PTS.logTextDisplayUpdate(data)
+      
     def flush(self):
         pass  # While Stdout Redirect happens, Required for file-like compatibility
         

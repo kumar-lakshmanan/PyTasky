@@ -11,20 +11,24 @@ So no PyQt UI elements or related object should be used here
 
 @author: kayma
 '''
-print("")
-print("------------------------")
-print("")
-print("This is just a tool lib")
-print("")
-print(__doc__)
-print("")
-print("------------------------")
-print("")
+# print("")
+# print("------------------------")
+# print("")
+# print("This is just a tool lib")
+# print("")
+# print(__doc__)
+# print("")
+# print("------------------------")
+# print("")
 
+import ast
 import json
 import kTools
 tls = kTools.GetKTools()
 
+def convertStrToObject(inpStr):
+    return ast.literal_eval(inpStr)
+    
 def getTls():
     return tls
     
@@ -42,10 +46,10 @@ def addToSystemPaths(paths):
 
 def getDictFromStr(strDict):
     return tls.convertDictStrToDict(strDict)
-    
-    
+        
 if __name__ == "__main__":
     print("Local Test")
     d = '{"Prop1":"Val1", "Prop2":"Val2"}'
+    d = """{ "NAME" : "Sample" ,  "INPUTS" : ["in1","in2"] , "PROPS" : {}}"""
     r = getDictFromStr(d)
-    print(r['Prop1'])
+    print(r)

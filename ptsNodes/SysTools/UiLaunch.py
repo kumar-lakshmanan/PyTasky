@@ -10,9 +10,7 @@ import systems.uitools as utls
 
 NAME = "UiLaunch"
 
-ISUI = True
-
-OUTPUTS = [ ("out",1) ]
+TAGS = ["custom","ui"]
 
 PROPS = {}
 PROPS["UIFile"] = "G:/pyworkspace/PyTasky/ptsUIs/createNode.ui"
@@ -21,8 +19,6 @@ PROPS["UICustomizerFunction"] = "CustomizingAction"
 PROPS["UIDataFetcherFunction"] = "GetUIData"
 
 def ACTION(request):
-    stls.info(f"Action Started {NAME}")
-
     uiDataFetcherFn = None
     output = {}
     def winClose():
@@ -46,4 +42,4 @@ def ACTION(request):
     else:
         stls.info(f'Error! No logic script mentioned {PROPS["UILogicScript"]}')
     
-    return {'out' : output}
+    return output

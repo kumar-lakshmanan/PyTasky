@@ -7,13 +7,13 @@ import kTools; tls = kTools.GetKTools()
 
 NAME = "Concater"
 
+TAGS = ["custom"]
+
 INPUTS = [ "in1", "in2" ]
-OUTPUTS = [ ("out",1) ]
 
 PROPS = {}
 PROPS["ConcaterString"] = "-"
 
 def ACTION(request):
-    tls.info(f"Action Started {NAME}")
-    output = request['in1'] + request['in2']
-    return {'out': output}
+    output = str(request['in1']) + str(PROPS["ConcaterString"]) + str(request['in2'])
+    return output

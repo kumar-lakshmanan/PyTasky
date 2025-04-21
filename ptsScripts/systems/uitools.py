@@ -11,15 +11,15 @@ So if you use this collection, It wont run in ui-less unix style servers.
 
 @author: kayma
 '''
-print("")
-print("------------------------")
-print("")
-print("This is just a tool lib")
-print("")
-print(__doc__)
-print("")
-print("------------------------")
-print("")
+# print("")
+# print("------------------------")
+# print("")
+# print("This is just a tool lib")
+# print("")
+# print(__doc__)
+# print("")
+# print("------------------------")
+# print("")
 
 from PyQt5.QtCore import (QFile, QFileInfo, QPoint, QSettings, QSignalMapper, QSize, QTextStream, Qt,)
 from PyQt5.QtWidgets import (QAction, QDialog, QApplication, QTableWidget, QVBoxLayout, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QTextEdit, QWidget,)
@@ -43,9 +43,9 @@ def getFormInput(parent, inputDictForm):
     outputDict = {}
     def dataFetcher(tbl, winObj):
         nonlocal outputDict        
-        for row in range(table.rowCount()):
-            key = table.item(row, 0).text()  # Property name (column 1)
-            value = table.item(row, 1).text()  # User-edited value (column 2)
+        for row in range(tbl.rowCount()):
+            key = tbl.item(row, 0).text()  # Property name (column 1)
+            value = tbl.item(row, 1).text()  # User-edited value (column 2)
             outputDict[key] = value  
         winObj.close()
     winObj = QtWidgets.QDialog(parent)

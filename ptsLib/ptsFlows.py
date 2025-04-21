@@ -17,7 +17,18 @@ from NodeGraphQt import BaseNode
 from kQt import kQtTools
 import kTools 
 import json
-from ptsLib import ptsQtFlowRunner
+from ptsLib import ptsFlowRunner
+from ptsLib import ptsNodeModuleScanner
+
+class EmittingStream(QtCore.QObject):
+    text_written = QtCore.pyqtSignal(str)
+    
+    def write(self, text):
+        if text.strip():  # avoid empty lines
+            self.text_written.emit(str(text) + "\n")
+    
+    def flush(self):
+        pass  # Required for compatibility
 
 class PTSFlows(object):
 
@@ -39,50 +50,74 @@ class PTSFlows(object):
         self.isFlowEdited = 0
         self.lastNodeSelected = None
         self.isFlowRunning = False
-        self.isFlowDebugging = False        
+        self.isFlowDebugging = False     
+        self.threadStream = None   
 
         self.doFlowInitializer()
         
-        self.flowRunner = ptsQtFlowRunner.PTSQtFlowRunner()
+        self.flowRunner = ptsFlowRunner.PTSFlowRunner()
         self.flowRunner.PTS = self.PTS
         self.flowRunner.PTS_UI = self.parentUi
         self.flowRunner.nodeExecutionInprogress.connect(self.doNodeExecutionInProgress)
+        self.flowRunner.nodeRejected.connect(self.doNodeDisable)
         self.flowRunner.flowExecutionCompleted.connect(self.doFlowExecutionCompleted)
         self.flowRunner.flowExecutionStatus.connect(self.doFlowExecutionStatus)
         self.flowRunner.executeUINodeAction.connect(self.doExecuteUINodeExecution)
+        
+        #Additional info
+        self.tls.info(f"----Ready Nodes Ready----")
+        for each in self.uiNodeCollection.keys():
+            self.tls.info(f"{each} - {self.uiNodeCollection[each]}")
+    
+    def stdStreamSwap(self, reverse=False):        
+        if reverse:
+            if not self.threadStream is None:
+                sys.stdout = self.original_stdout
+                sys.stderr = self.original_stderr                
+                self.threadStream.deleteLater()
+                self.threadStream = None    
+            self.PTS.logDisplayer.grabStdOut()
+        else:
+            self.PTS.logDisplayer.reset()
+            self.original_stdout = sys.stdout
+            self.original_stderr = sys.stderr            
+            self.threadStream = EmittingStream()
+            self.threadStream.text_written.connect(self.PTS.logTextDisplayUpdate)
+            sys.stdout = self.threadStream
+            sys.stderr = self.threadStream
     
     def doExecuteUINodeExecution(self, modToExecute, request, callBackPassingResult):
-        # print(modToExecute)
-        # print(request)
-        # print(callBackPassingResult)
-        # uiFileName = "G:/pyworkspace/PyTasky/ptsUIs/dictEditor.ui"
-        # winObj = QtWidgets.QDialog(self.PTS.ui)
-        # uiObject = loadUi(uiFileName, winObj)
-        #
-        # result = winObj.exec_()  # Run the dialog and get return value (e.g., QDialog.Accepted/Rejected)
-        # print("Window closed")
-        # callBackPassingResult({"out":"myspl"})       
-        res = modToExecute.ACTION(request)
-        callBackPassingResult(res)
-         
-    
-                        
+        try:
+            res = modToExecute.ACTION(request)
+            callBackPassingResult(res)
+        except Exception as e:
+            lstError = self.tls.getLastErrorInfo()
+            print('----------------------------------')
+            self.tls.error(lstError)
+            print('----------------------------------')
+            self.flowRunner.terminateFlow("Node execution failed.")
+            self.doFlowExecutionCompleted(None)
+            
     def doRunFlow(self):
         self.tls.info(f"Flow execution started, {self.getCurrentSession()}")
         if self.isSessionInProgress() and not self.isFlowRunning and not self.isFlowDebugging:
-            self.PTS.logDisplayer.reset()
+            self.PTS.bringConsoleToFocus()
+            self.stdStreamSwap()
+            self.doNodeEnableAll()
             self.flowRunner.debugMode = 0
             self.flowRunner.preSetup()
             self.flowRunner.start()
             self.isFlowRunning = 1
-            self.isFlowDebugging = 0            
+            self.isFlowDebugging = 0                        
         else:
             self.tls.info("Unable to debug flow. Either no flow loaded, or already another flow running / debugging.")
         
     def doDebugFlow(self):
         self.tls.info("Debugging flow...")
         if self.isSessionInProgress() and not self.isFlowRunning and not self.isFlowDebugging:
-            self.PTS.logDisplayer.reset()
+            self.PTS.bringConsoleToFocus()            
+            self.stdStreamSwap()
+            self.doNodeEnableAll()
             self.flowRunner.debugMode = 1
             self.flowRunner.preSetup()
             self.flowRunner.start()
@@ -101,14 +136,15 @@ class PTSFlows(object):
 
     def doTerminateExecution(self):
         if self.isFlowDebugging or self.isFlowRunning:
+            self.flowRunner.terminateFlow("Requested")
             self.isFlowDebugging = 0
             self.isFlowRunning = 0
             self.flowRunner.stop()
+            self.PTS.coreToolBarActionRestricter(2)
                 
     def doFlowInitializer(self):
         self.tls.info(f"Preparing node graph setup...")
         self.convertGenerateUINodeCollections()
-  
         self.tls.info(f"Creating node graph ui objects...")
         self.ndGraph = NodeGraph()        
         self.ndGraph.register_nodes(list(self.uiNodeCollection.values()))        
@@ -209,16 +245,17 @@ class PTSFlows(object):
     def doLoadFlow(self, flowName, flowFile):
         self.currentLoadedFlowName = flowName
         self.currentLoadedFlowFile = flowFile 
-        self.coreLoadFlow(flowFile)
+        self.coreLoadFlow(flowFile)      
 
     def doFlowExecutionStatus(self, msg):
         self.tls.info(msg)
 
     def doFlowExecutionCompleted(self, param):
-        self.PTS.logDisplayer.grabStdOut()
+        #self.PTS.logDisplayer.grabStdOut()
+        self.stdStreamSwap(reverse=True)
         self.tls.info(f"Flow execution completed, {self.getCurrentSession()}")
         if self.lastNodeSelected: self.lastNodeSelected.set_selected(False)
-        self.PTS.logDisplayer.grabStdOut()
+        #self.PTS.logDisplayer.grabStdOut()
         self.isFlowRunning = 0
         self.isFlowDebugging = 0
         self.PTS.coreToolBarActionRestricter(2)
@@ -233,7 +270,18 @@ class PTSFlows(object):
                 if str(cur.NODE_NAME).strip() == str(nodeName).strip():
                     cur.set_selected(True)
                     self.lastNodeSelected = cur
-
+                    
+    def doNodeDisable(self, nodeName):
+        for each in self.ndGraph.model.nodes.keys():
+            cur = self.ndGraph.model.nodes[each]
+            if str(cur.NODE_NAME).strip() == str(nodeName).strip():
+                cur.set_disabled(True)     
+    
+    def doNodeEnableAll(self):
+        for each in self.ndGraph.model.nodes.keys():
+            cur = self.ndGraph.model.nodes[each]
+            cur.set_disabled(False)  
+                
     def openFlow(self):
         flowFile = self.qttls.getFile('Select a flow file to open...', self.ptsFlowsPath, 'Flow Files (*.flow);;All Files (*)')
         if flowFile:
@@ -303,66 +351,22 @@ class PTSFlows(object):
         self.currentLoadedFlowName = os.path.basename(file_path).lower().replace('.flow','')        
         self.currentFlowFileLoaded = os.path.abspath(file_path)    
         self.PTS.doSetTitle(isEdited=0, flowName=self.currentLoadedFlowName)     
+        self.PTS.coreToolBarActionRestricter(2)
+        self.doNodeEnableAll()
 
 
     def convertGenerateUINodeCollections(self):
         '''
-        Read node folder and convert it to ui nodes:
+        Scan node folder and convert it to qt nodes:
         '''        
         self.uiNodeCollection = {}
-        self.coreNodeCollection = {}
-
-        advConfig = {}
-        advConfig['silentIgnoredFileInfo'] = 1
-        nodeModFiles = self.console.scanModuleFiles(self.ptsNodesPath, ignoreFileNameHasText=['__init__','Compiler','Template', 'Node', 'Generator','DummyC_o_r_e'], advConfig=advConfig)
-        for nodeModName in nodeModFiles.keys():
-            nodeModObj = nodeModFiles[nodeModName][0]
-         
-            modName = nodeModObj.__name__
-            name = nodeModObj.NAME
-            desc = nodeModObj.__doc__
-            ips = nodeModObj.INPUTS if hasattr(nodeModObj, 'INPUTS') else []
-            ops = nodeModObj.OUTPUTS if hasattr(nodeModObj, 'OUTPUTS') else []
-            props = nodeModObj.PROPS if hasattr(nodeModObj, 'PROPS') else {}
+        
+        pts = ptsNodeModuleScanner.PTSNodeModuleScanner()
+        pts.scanNodeModuleFolder()
+        
+        for clsName in pts.allNodes:
+            self.uiNodeCollection[clsName] = pts.allNodes[clsName]
             
-            def generateDynamicConstructor(ips, ops, props):
-                def dynamicConstructor(self):
-                    super(self.__class__, self).__init__()
-                    
-                    if ips:
-                        for each in ips:
-                            if type(each) == type(()):
-                                portName = each[0]
-                                portMulti = each[1]
-                            else:
-                                portName = each
-                                portMulti = 0
-                            self.add_input(portName, multi_input=portMulti)
-        
-                    if ops:
-                        for each in ops:
-                            if type(each) == type(()):
-                                portName = each[0]
-                                portMulti = each[1]
-                            else:
-                                portName = each
-                                portMulti = 0
-                            self.add_output(portName, multi_output=portMulti)
-                                        
-                    self.props = props
-                return dynamicConstructor
-                
-            attrb = {}
-            attrb['NODE_NAME'] = name
-            attrb['NODE_DESC'] = desc
-            attrb['__init__'] = generateDynamicConstructor(ips, ops, props)
-        
-            genereatedUiNodeClass = type(nodeModName, (BaseNode,), attrb)
-            if not nodeModName in self.uiNodeCollection.keys(): 
-                self.uiNodeCollection[nodeModName] = genereatedUiNodeClass
-            if not nodeModName in self.coreNodeCollection.keys(): 
-                self.coreNodeCollection[nodeModName] = nodeModObj
-
     def centerViewFlow(self):
         allNodes = self.ndGraph.all_nodes()
         if allNodes : self.ndGraph.center_on(allNodes)        

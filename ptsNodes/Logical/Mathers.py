@@ -8,8 +8,9 @@ import kTools; tls = kTools.GetKTools()
 
 NAME = "Mathers"
 
+TAGS = ["custom"]
+
 INPUTS = [ "in1", "in2" ]
-OUTPUTS = [ ("out",1) ]
 
 PROPS = {}
 PROPS["ADD"] = "1"
@@ -18,11 +19,9 @@ PROPS["MUL"] = "0"
 PROPS["DIV"] = "0"
 
 def ACTION(request):
-    tls.info(f"Action Started {NAME}")
     
     in1 = int(request["in1"] if 'in1' in request else 1)
     in2 = int(request["in2"] if 'in2' in request else 2)
-    tls.info(f"{NAME} processing {in1} and {in2}")
     
     if PROPS['ADD'] == "1":
         output = in1 + in2
@@ -36,4 +35,4 @@ def ACTION(request):
     if PROPS['DIV'] == "1":
         output = in1 / in2                
     
-    return {'out' : output}
+    return output

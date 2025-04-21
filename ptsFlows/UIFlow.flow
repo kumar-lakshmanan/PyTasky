@@ -9,10 +9,10 @@
     "reject_connection_types":{}
   },
   "nodes":{
-    "0x20eb5443490":{
-      "type_":"nodeGraphQt.nodes.Variable",
+    "0x24fff967390":{
+      "type_":"nodeGraphQt.nodes.InputForm",
       "icon":null,
-      "name":"mv1",
+      "name":"InputForm",
       "color":[
         13,
         18,
@@ -37,17 +37,17 @@
       "width":220,
       "height":80,
       "pos":[
-        -252.82826951674946,
-        112.0224143077721
+        -313.0803823385885,
+        364.4412339756734
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x20eb7bfa3d0":{
-      "type_":"nodeGraphQt.nodes.Variable",
+    "0x24ffc8ac510":{
+      "type_":"nodeGraphQt.nodes.CreateNodeData",
       "icon":null,
-      "name":"mv2",
+      "name":"CreateNodeData",
       "color":[
         13,
         18,
@@ -72,17 +72,17 @@
       "width":220,
       "height":80,
       "pos":[
-        -139.90183412665786,
-        347.385758470593
+        256.1103628438608,
+        288.4134260430674
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
       "subgraph_session":{}
     },
-    "0x20eb7bfac10":{
+    "0x24ffb9ec750":{
       "type_":"nodeGraphQt.nodes.Displayer",
       "icon":null,
-      "name":"mdisp",
+      "name":"Displayer",
       "color":[
         13,
         18,
@@ -107,43 +107,8 @@
       "width":220,
       "height":80,
       "pos":[
-        720.6156225339622,
-        139.12098108598377
-      ],
-      "layout_direction":0,
-      "port_deletion_allowed":false,
-      "subgraph_session":{}
-    },
-    "0x20eb4bad450":{
-      "type_":"nodeGraphQt.nodes.Concater",
-      "icon":null,
-      "name":"strcon",
-      "color":[
-        13,
-        18,
-        23,
-        255
-      ],
-      "border_color":[
-        74,
-        84,
-        85,
-        255
-      ],
-      "text_color":[
-        255,
-        255,
-        255,
-        180
-      ],
-      "disabled":false,
-      "selected":true,
-      "visible":true,
-      "width":220,
-      "height":81.2,
-      "pos":[
-        288.8325503633458,
-        172.77680164231077
+        651.2402781292021,
+        377.3845318241282
       ],
       "layout_direction":0,
       "port_deletion_allowed":false,
@@ -153,53 +118,37 @@
   "connections":[
     {
       "out":[
-        "0x20eb5443490",
+        "0x24fff967390",
         "out"
       ],
       "in":[
-        "0x20eb4bad450",
-        "in1"
+        "0x24ffc8ac510",
+        "inp"
       ]
     },
     {
       "out":[
-        "0x20eb7bfa3d0",
+        "0x24ffc8ac510",
         "out"
       ],
       "in":[
-        "0x20eb4bad450",
-        "in2"
-      ]
-    },
-    {
-      "in":[
-        "0x20eb7bfac10",
-        "in1"
-      ],
-      "out":[
-        "0x20eb4bad450",
-        "out"
+        "0x24ffb9ec750",
+        "in"
       ]
     }
   ],
   "nodeProps":{
-    "mv1":{
-      "Node Name":"mv1",
+    "InputForm":{
+      "Node Name":"InputForm",
       "Node Script":"default",
-      "Value":"kumar"
+      "FormNameValuePairs":"{ \"NAME\" : \"Sample\" ,  \"INPUTS\" : [\"in1\",\"in2\"] , \"PROPS\" : {}}"
     },
-    "mv2":{
-      "Node Name":"mv2",
-      "Value":"esan"
+    "CreateNodeData":{
+      "Node Name":"CreateNodeData"
     },
-    "mdisp":{
-      "Node Name":"mdisp",
-      "STYLE":"1"
-    },
-    "strcon":{
-      "Node Name":"strcon",
-      "Node Script":"rough.servers.rough.script1",
-      "ConcaterString":"-"
+    "Displayer":{
+      "STYLE":"1",
+      "Node Name":"Displayer"
     }
   }
 }
