@@ -12,7 +12,7 @@ from PyQt5.uic import loadUi
 from PyQt5 import QtCore, QtGui, Qsci, QtWidgets
 import Qt
 
-import kTools 
+import kTools
 from kQt import kQtTools
 
 
@@ -20,17 +20,17 @@ class PTSMainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent = None):
         super().__init__()
-        self.tls = kTools.GetKTools()
+        self.tls = kTools.KTools()
         self.qttls = kQtTools.KQTTools()
-        
+
         self.tls.info('Preparing GUI...')
-        QtWidgets.QMainWindow.__init__(self)		
+        QtWidgets.QMainWindow.__init__(self)
         self.uiFile = sys.modules[__name__].__file__
-        self.uiFile = self.uiFile.replace(".py", ".ui")        
+        self.uiFile = self.uiFile.replace(".py", ".ui")
         loadUi(self.uiFile, self)
 
 if __name__ == "__main__":
-    tls = kTools.GetKTools("pytasky")    
+    tls = kTools.KTools("pytasky")
     app = QtWidgets.QApplication(sys.argv)
     appwin = PTSMainWindow()
     appwin.show()

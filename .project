@@ -4,7 +4,6 @@
 	<comment></comment>
 	<projects>
 		<project>kpylib</project>
-		<project>thirdparties</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

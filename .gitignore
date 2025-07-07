@@ -1,3 +1,9 @@
 *.pyc
 *.log
 Dummy
+QtDesigner.zip
+QtDesigner
+ptsFlows
+build_support
+/ptsPack/_tmp
+selenium

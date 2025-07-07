@@ -1,0 +1,33 @@
+{
+	"general" : {
+					"timeStampFormat" : "%Y%m%d%H%M%S",
+					"dateTimeFormat" : "%Y-%m-%d %I:%M:%S %p",
+					"sysPaths" : [ 	"G:/pyworkspace/PyTasky/ptsExtLib",
+									"G:/pyworkspace/PyTasky/data/ptsScripts"
+								]
+				},
+	"logging" : {
+					"logDisable" : 0,
+					"logLevel" : "DEBUG",
+					"logDateTimeFormat2" : "%Y-%m-%d %I:%M:%S%p",
+					"logDateTimeFormat" : "%I:%M:%S%p",
+					"logFormat": "[%(asctime)s]%(levelname).1s:%(message)s",
+					"logToConsole" : 1,
+					"logToFile" : 1,
+					"logFile" : "output.log",
+					"logModuleName" : 0,
+					"logProdMode" : 0
+				},
+	"folders" : {
+					"temp" : "C:/TEMP"
+				},
+	"pts" : {
+				"flowsPath" : "G:/pyworkspace/PyTasky/data/ptsFlows",
+				"nodesPath" : "G:/pyworkspace/PyTasky/data/ptsNodes",
+				"scriptsPath" : "G:/pyworkspace/PyTasky/data/ptsScripts",
+				"uisPath" : "G:/pyworkspace/PyTasky/data/ptsUIs",
+				"div":"---------------------------------",
+				"qtDesignerBin" : "G:/pyworkspace/PyTasky/QtDesigner/designer.exe",
+				"scriptEditorBin" : "D:/Pyscripter/PyScripter.exe"
+			}
+}

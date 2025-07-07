@@ -1,14 +1,21 @@
 __appname__ = "PyTasky"
 __author__  = "Kumaresan"
 __created__ = "2025-03-07"
-__updated__ = "2025-04-20"
+__updated__ = "2025-07-05"
+
+'''
+
+Check kTools document for basic config
+'''
 
 import os, sys
-KCONFIG = 'G:/pyworkspace/PyTasky/config.json'
-KDEPENDS = 'G:/pyworkspace/kpylib;G:/pyworkspace/PyTasky/ptsScripts;G:/pyworkspace/PyTasky'
-if not 'KDEPENDS' in os.environ : os.environ['KDEPENDS'] = KDEPENDS
-if not 'KCONFIG' in os.environ : os.environ['KCONFIG'] = KCONFIG
-for eachDependency in os.environ['KDEPENDS'].split(';'): sys.path.append(eachDependency.strip())
+K_PYLIB = 'G:/pyworkspace/kpylib'
+K_CONFIG = os.path.abspath('config.json')
+if not ('K_PYLIB' in os.environ and os.path.exists(os.environ['K_PYLIB'])): os.environ['K_PYLIB'] = K_PYLIB
+if not ('K_PYLIB' in os.environ and os.path.exists(os.environ['K_PYLIB'])): sys.exit("K_PYLIB not found!")
+for eachDependency in os.environ['K_PYLIB'].split(';'): sys.path.append(eachDependency.strip())
+if not ('K_CONFIG' in os.environ and os.path.exists(os.environ['K_CONFIG'])): os.environ['K_CONFIG'] = K_CONFIG
+if not ('K_CONFIG' in os.environ and os.path.exists(os.environ['K_CONFIG'])): sys.exit("K_CONFIG not found!")
 
 from PyQt5 import QtCore, QtGui, Qsci, QtWidgets
 from PyQt5.Qsci import (QsciScintilla, QsciLexerPython)
@@ -25,6 +32,7 @@ from ptsLib import ptsFlows
 import atexit
 from kQt import kQtTools
 import kTools
+import kCodeExecuter
 
 import PyTaskyLookUps
 
@@ -38,10 +46,11 @@ class core():
         self.qapp = qapp
 
         #Support Modules ready
-        self.tls = kTools.GetKTools()
+        self.tls = kTools.KTools()
         self.qttls = kQtTools.KQTTools()
+        self.console = kCodeExecuter.KCodeExecuter()
         self.tls.qapp = qapp
-        self.console = self.tls.console
+        self.disableLogDisplay = 0
 
         #Main UI ready
         self.ui = ptsMainWindow.PTSMainWindow()
@@ -56,13 +65,19 @@ class core():
         self.doLoadNodeTree()
         self.doLoadScriptTree()
         self.doLoadFlowTree()
+        self.doLoadUITree()
         self.doToolBars()
 
         self.doSignalConnects()
 
         self.flows = ptsFlows.PTSFlows(self)
+        
+        self.tls.share["PTS_UI"] = self.ui
+        self.tls.share["PTS_FLOWS"] = self.flows
 
         self.qttls.uiLayoutRestore()
+        
+        self.tls.info("System Ready!")
 
     def showUI(self):
         self.ui.show()
@@ -93,15 +108,21 @@ class core():
         self.ui.propContainerLayout.addWidget(self.ui.splitter)
         self.ui.splitter.addWidget(self.ui.propsHolder)
         self.ui.splitter.addWidget(self.ui.propsDesc)
+        
+        #Debug Window Resetup
+        # self.ui.splitter2 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        # self.ui.debugTreeHolderLayout.addWidget(self.ui.splitter2)
+        # self.ui.splitter2.addWidget(self.ui.debugListHolder)
+        # self.ui.splitter2.addWidget(self.ui.debugInfoHolder)        
 
     def doToolBars(self):
         self.tb01 = self.ui.addToolBar('Flow Tools')
         self.tb01.setObjectName('flowToolBar')
         self.tb01.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
 
-        self.tb01a01 = self.qttls.createAction("New", self.ui, icon="new document.ico", fn=self.doToolClicked)
+        self.tb01a01 = self.qttls.createAction("New", self.ui, icon="newspaper.ico", fn=self.doToolClicked)
         self.tb01a04 = self.qttls.createAction("Open", self.ui, icon="Open Folder.ico", fn=self.doToolClicked)
-        self.tb01a02 = self.qttls.createAction("Save", self.ui, icon="save.ico", fn=self.doToolClicked)
+        self.tb01a02 = self.qttls.createAction("Save", self.ui, icon="file_save_as.ico", fn=self.doToolClicked)
         self.tb01a03 = self.qttls.createAction("Save As", self.ui, icon="save_as.ico", fn=self.doToolClicked)
 
         self.tb01.addAction(self.tb01a01)
@@ -140,112 +161,101 @@ class core():
         self.tb02.setIconSize(self.tb02.iconSize().scaled(iconSize, iconSize, 1))
         self.tb03.setIconSize(self.tb03.iconSize().scaled(iconSize, iconSize, 1))
 
-        self.coreToolBarActionRestricter(1)
+        self.disableAllToolBarAction()
+        
+    def disableAllToolBarAction(self):
+        self.tb01a01.setEnabled(0)   #New
+        self.tb01a04.setEnabled(0)   #Open
+        self.tb01a02.setEnabled(0)   #Save
+        self.tb01a03.setEnabled(0)   #Save As
 
-    def coreToolBarActionRestricter(self, mode):
-
-        if mode == 1:
-            # mode = 1
-            # No flow loaded
-            # Ok new, open
-            # No save/saveas/run/debug/debugsteps/terminate
-
-            #Enable
+        self.tb02a01.setEnabled(0)   #Run
+        self.tb02a02.setEnabled(0)   #Debug As
+        self.tb02a03.setEnabled(0)   #Step As
+        self.tb02a04.setEnabled(0)   #Resume As
+        self.tb02a05.setEnabled(0)   #Terminate As
+        
+    def enableToolBarActionsFor(self, actionName=None):
+        if actionName == "clear":
             self.tb01a01.setEnabled(1)   #New
             self.tb01a04.setEnabled(1)   #Opem
             self.tb01a02.setEnabled(0)   #Save
             self.tb01a03.setEnabled(0)   #Save As
-            #Disable
             self.tb02a01.setEnabled(0)   #Run
             self.tb02a02.setEnabled(0)   #Debug As
             self.tb02a03.setEnabled(0)   #Step As
             self.tb02a04.setEnabled(0)   #Resume As
-            self.tb02a05.setEnabled(0)   #Terminate As
-
-        if mode == 1.5:
-            # mode = 1.5
-            # No flow loaded, BUT FLOW DESIGNER
-            # Ok new, open, SAVE/SAVEAS
-            # No run/debug/debugsteps/terminate
-
-            #Enable
+            self.tb02a05.setEnabled(0)   #Terminate As   
+        if actionName == "edited":
             self.tb01a01.setEnabled(1)   #New
             self.tb01a04.setEnabled(1)   #Opem
             self.tb01a02.setEnabled(1)   #Save
             self.tb01a03.setEnabled(1)   #Save As
-            #Disable
             self.tb02a01.setEnabled(0)   #Run
             self.tb02a02.setEnabled(0)   #Debug As
             self.tb02a03.setEnabled(0)   #Step As
             self.tb02a04.setEnabled(0)   #Resume As
-            self.tb02a05.setEnabled(0)   #Terminate As
-
-
-        if mode == 2:
-            # mode = 2
-            # Flow loaded
-            # Ok new, open, save/saveas/run/debug
-            # No debugsteps/terminate
-
-            #Enable
+            self.tb02a05.setEnabled(0)   #Terminate As  
+        if actionName == "saved":
             self.tb01a01.setEnabled(1)   #New
             self.tb01a04.setEnabled(1)   #Opem
-            self.tb01a02.setEnabled(1)   #Save
+            self.tb01a02.setEnabled(0)   #Save
             self.tb01a03.setEnabled(1)   #Save As
-            #Disable
+            self.tb02a01.setEnabled(1)   #Run
+            self.tb02a02.setEnabled(1)   #Debug As
+            self.tb02a03.setEnabled(0)   #Step As
+            self.tb02a04.setEnabled(0)   #Resume As
+            self.tb02a05.setEnabled(0)   #Terminate As  
+        if actionName == "loaded":
+            self.tb01a01.setEnabled(1)   #New
+            self.tb01a04.setEnabled(1)   #Opem
+            self.tb01a02.setEnabled(0)   #Save
+            self.tb01a03.setEnabled(1)   #Save As
+            self.tb02a01.setEnabled(1)   #Run
+            self.tb02a02.setEnabled(1)   #Debug As
+            self.tb02a03.setEnabled(0)   #Step As
+            self.tb02a04.setEnabled(0)   #Resume As
+            self.tb02a05.setEnabled(0)   #Terminate As      
+        if actionName == "running":
+            self.tb01a01.setEnabled(0)   #New
+            self.tb01a04.setEnabled(0)   #Opem
+            self.tb01a02.setEnabled(0)   #Save
+            self.tb01a03.setEnabled(0)   #Save As
+            self.tb02a01.setEnabled(0)   #Run
+            self.tb02a02.setEnabled(0)   #Debug As
+            self.tb02a03.setEnabled(1)   #Step As
+            self.tb02a04.setEnabled(1)   #Resume As
+            self.tb02a05.setEnabled(1)   #Terminate As               
+        if actionName == "debugging":
+            self.tb01a01.setEnabled(0)   #New
+            self.tb01a04.setEnabled(0)   #Opem
+            self.tb01a02.setEnabled(0)   #Save
+            self.tb01a03.setEnabled(0)   #Save As
+            self.tb02a01.setEnabled(0)   #Run
+            self.tb02a02.setEnabled(0)   #Debug As
+            self.tb02a03.setEnabled(1)   #Step As
+            self.tb02a04.setEnabled(1)   #Resume As
+            self.tb02a05.setEnabled(1)   #Terminate As   
+        if actionName == "executiondone":                     
+            self.tb01a01.setEnabled(1)   #New
+            self.tb01a04.setEnabled(1)   #Opem
+            self.tb01a02.setEnabled(0)   #Save
+            self.tb01a03.setEnabled(1)   #Save As
             self.tb02a01.setEnabled(1)   #Run
             self.tb02a02.setEnabled(1)   #Debug As
             self.tb02a03.setEnabled(0)   #Step As
             self.tb02a04.setEnabled(0)   #Resume As
             self.tb02a05.setEnabled(0)   #Terminate As
 
-        if mode == 3:
-            # mode = 3
-            # Flow loaded - flow running
-            # Ok new, open, save/saveas/terminate
-            # No run/debug/debugsteps
-
-            #Enable
-            self.tb01a01.setEnabled(1)   #New
-            self.tb01a04.setEnabled(1)   #Opem
-            self.tb01a02.setEnabled(1)   #Save
-            self.tb01a03.setEnabled(1)   #Save As
-            #Disable
-            self.tb02a01.setEnabled(0)   #Run
-            self.tb02a02.setEnabled(0)   #Debug As
-            self.tb02a03.setEnabled(0)   #Step As
-            self.tb02a04.setEnabled(0)   #Resume As
-            self.tb02a05.setEnabled(1)   #Terminate As
-
-        if mode == 4:
-            # mode = 4
-            # Flow loaded - flow debugging
-            # Ok new, open, save/saveas/debugsteps/terminate
-            # No run/debug/debugsteps
-
-            #Enable
-            self.tb01a01.setEnabled(1)   #New
-            self.tb01a04.setEnabled(1)   #Opem
-            self.tb01a02.setEnabled(1)   #Save
-            self.tb01a03.setEnabled(1)   #Save As
-            #Disable
-            self.tb02a01.setEnabled(0)   #Run
-            self.tb02a02.setEnabled(0)   #Debug As
-            self.tb02a03.setEnabled(1)   #Step As
-            self.tb02a04.setEnabled(1)   #Resume As
-            self.tb02a05.setEnabled(1)   #Terminate As
-
     def doToolClicked(self, *arg):
         btnName = self.ui.sender().text()
 
-       # File Toolbar
+        # File Toolbar
         if (btnName == "New"):
-            self.flows.clearFlow()
-            self.coreToolBarActionRestricter(1)
-            self.doSetTitle(1,"New")
+            self.flows.doNewFlow()
 
-        if (btnName == "Open"):
-            self.flows.openFlow()
+        if (btnName == "Open"):         
+            self.flows.doOpenFlow()
 
         if (btnName == "Save"):
             self.flows.doSaveFlow()
@@ -256,11 +266,9 @@ class core():
         # Execution Toolbar
         if (btnName == "Run"):
             self.flows.doRunFlow()
-            self.coreToolBarActionRestricter(3)
 
         if (btnName == "Debug"):
             self.flows.doDebugFlow()
-            self.coreToolBarActionRestricter(4)
 
         if (btnName == "Step Next"):
             self.flows.doDebugProceed()
@@ -274,7 +282,6 @@ class core():
         #Custom
         if (btnName == "Dummy"):
             self.tls.debug("Dummy")
-            ptsNodeGenerator.runGen()
 
     def doSetTitle(self, isEdited=0, flowName=None):
         currentName = self.ui.windowTitle()
@@ -286,13 +293,28 @@ class core():
             updatedName = "PyTask - " + flowName if not flowName in currentName else currentName
         elif isEdited==1 and flowName!="":
             updatedName = "PyTask"
-
         self.ui.setWindowTitle(updatedName)
+
+    def doLoadUITree(self):
+        config = {}
+        config['type'] = 'UIs'
+        config['filePath'] = self.tls.getSafeConfig(['pts', 'uisPath'])
+        config['disallowedFolder'] = ['__','.git']
+        config['allowedFiles'] = ['.ui','.UI', '.uI','.Ui']
+        config['fileContentShouldHave'] = '<ui version="4.0">'
+        config['targetTreeObject'] = self.ui.treePtsUIs
+        config['contextMenuOpenSpace'] = ['Create new UI file...','','Refresh']
+        config['contextMenuFileItems'] = ['Edit UI file...','Copy UI file path', '' ,'Delete']
+        config['contextMenuDirItems'] = ['Create new UI file...','','Refresh']
+        config['menuSelectedFn'] = None
+        config['dblClickFn'] = self.doUITreeDblClicked
+        self.treeUI = ptsTreeUIHandler.TreeUIHandler(self, config)
+        self.treeUI.loadTree()
 
     def doLoadFlowTree(self):
         config = {}
         config['type'] = 'Flow'
-        config['filePath'] = 'G:/pyworkspace/PyTasky/ptsFlows'
+        config['filePath'] = self.tls.getSafeConfig(['pts', 'flowsPath'])
         config['disallowedFolder'] = ['__','.git']
         config['allowedFiles'] = ['.flow','.FLOW']
         config['fileContentShouldHave'] = "pipe_collision"
@@ -308,10 +330,10 @@ class core():
     def doLoadScriptTree(self):
         config = {}
         config['type'] = 'Script'
-        config['filePath'] = 'G:/pyworkspace/PyTasky/ptsScripts'
+        config['filePath'] = self.tls.getSafeConfig(['pts', 'scriptsPath'])
         config['disallowedFolder'] = ['__','.git']
         config['allowedFiles'] = ['.py']
-        config['fileContentShouldHave'] = "created"
+        config['fileContentShouldHave'] = ":"
         config['targetTreeObject'] = self.ui.treePtsScripts
         config['contextMenuOpenSpace'] = ['Create Folder...','Open Scripts Folder','','Refresh']
         config['contextMenuFileItems'] = ['Execute','','Edit Script','','Delete']
@@ -324,10 +346,10 @@ class core():
     def doLoadNodeTree(self):
         config = {}
         config['type'] = 'Node'
-        config['filePath'] = 'G:/pyworkspace/PyTasky/ptsNodes'
-        config['disallowedFolder'] = ['__','.git','Template','DummyC_o_r_e','Compiler']
+        config['filePath'] = self.tls.getSafeConfig(['pts', 'nodesPath'])
+        config['disallowedFolder'] = ['__','.git']
         config['allowedFiles'] = ['.py']
-        config['fileContentShouldHave'] = "@author:"
+        config['fileContentShouldHave'] = "#PTS_NODE"
         config['targetTreeObject'] = self.ui.treePtsNodes
         config['contextMenuOpenSpace'] = ['Create Folder...','Open Nodes Folder','','Refresh']
         config['contextMenuFileItems'] = ['Edit Node','','Delete']
@@ -339,8 +361,13 @@ class core():
 
     def doFlowsTreeDblClicked(self, label, fileFolder, typ, item):
         if typ == "file":
-            self.flows.doLoadFlow(label, fileFolder)
+            self.flows.coreLoadFlow(fileFolder)
 
+    def doUITreeDblClicked(self, label, fileFolder, typ, item):
+        if typ == "file":
+            bin = self.tls.getSafeConfig(['pts','qtDesignerBin'])
+            self.tls.info(f"Opening the file {bin} with {fileFolder}")
+            self.tls.fileLauncherWithBin(bin, fileFolder)
 
     def doScriptTreeDblClicked(self, label, fileFolder, typ, item):
         if typ == "file":
@@ -359,9 +386,10 @@ class core():
             script = opt[3][2]
             self.console.runScript(script)
         elif cmd == "Edit Script":
-            script = opt[3][2]
-            cmd = f'D:/Pyscripter/PyScripter.exe "{script}"'
-            self.tls.shellExecuteNoBlock(cmd)
+            binary = self.tls.getSafeConfig(['pts','scriptEditorBin'])
+            fileToOpenWith = opt[3][2]
+            self.tls.info(f"Opening the file {binary} with {fileToOpenWith}")
+            self.tls.fileLauncherWithBin(binary, fileToOpenWith)
         else:
             self.tls.info(opt)
 
@@ -395,18 +423,18 @@ class core():
         self.ui.dckPtsStreamOut.raise_()
         # Optionally set focus to its child widget
         self.ui.dckPtsStreamOut.widget().setFocus()
-            
+
     def logTextDisplayUpdate(self, text):
-        self.ui.qsciPtsStreamOut.setCursorPosition(self.ui.qsciPtsStreamOut.lines(), 0)
-        self.ui.qsciPtsStreamOut.insertAt(text, self.ui.qsciPtsStreamOut.lines(), 0)
-        vsb = self.ui.qsciPtsStreamOut.verticalScrollBar()
-        vsb.setValue(vsb.maximum())    
-        hsb = self.ui.qsciPtsStreamOut.horizontalScrollBar()
-        hsb.setValue(0)           
+        if not self.disableLogDisplay:
+            self.ui.qsciPtsStreamOut.setCursorPosition(self.ui.qsciPtsStreamOut.lines(), 0)
+            self.ui.qsciPtsStreamOut.insertAt(text, self.ui.qsciPtsStreamOut.lines(), 0)
+            vsb = self.ui.qsciPtsStreamOut.verticalScrollBar()
+            vsb.setValue(vsb.maximum())
+            hsb = self.ui.qsciPtsStreamOut.horizontalScrollBar()
+            hsb.setValue(0)
 
 if __name__ == "__main__":
-
-    tls = kTools.GetKTools("PYTASKY", PyTaskyLookUps)
+    tls = kTools.KTools("PYTASKY", PyTaskyLookUps, "pytasky_config.json")
     app = QtWidgets.QApplication(sys.argv)
     appCore = core(app)
     appCore.showUI()

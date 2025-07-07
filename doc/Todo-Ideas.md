@@ -6,6 +6,7 @@
 * [NodeGraphQt](https://jchanvfx.github.io/NodeGraphQt)
 * AHK
 * Django
+* selenium
   
   
 ### InProgress ###
