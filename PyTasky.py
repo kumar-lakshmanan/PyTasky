@@ -1,7 +1,7 @@
 __appname__ = "PyTasky"
 __author__  = "Kumaresan"
 __created__ = "2025-03-07"
-__updated__ = "2025-07-05"
+__updated__ = "2025-07-08"
 
 '''
 
@@ -361,6 +361,7 @@ class core():
 
     def doFlowsTreeDblClicked(self, label, fileFolder, typ, item):
         if typ == "file":
+            self.flows.doClearAndInitalizeFlowChartArea()
             self.flows.coreLoadFlow(fileFolder)
 
     def doUITreeDblClicked(self, label, fileFolder, typ, item):

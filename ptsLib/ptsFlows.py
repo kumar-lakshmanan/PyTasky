@@ -42,6 +42,7 @@ class PTSFlows(object):
         self.parentUi = self.PTS.ui
         self.console = self.PTS.console
         self.ndGraph = None
+        self.canvas = self.parentUi.wgCanvas
 
         self.tls.createNewSignalSetup("flowevent")
         self.tls.subscribeToSignal("flowevent", self.flowSignalsHndl)
@@ -78,7 +79,7 @@ class PTSFlows(object):
         for each in self.uiNodeCollection.keys():
             self.tls.info(f"{each} - {self.uiNodeCollection[each]}")
         
-        self.doClearFlow()
+        self.doClearAndInitalizeFlowChartArea()
         
     def createNewFlowRunner(self, parent=None):        
         if hasattr(self, "flowRunner") and self.flowRunner:
@@ -155,20 +156,37 @@ class PTSFlows(object):
     def doFlowInitializer(self):
         self.tls.info(f"Preparing node graph setup...")
         self.convertGenerateUINodeCollections()
-        self.tls.info(f"Creating node graph ui objects...")
-        self.ndGraph = NodeGraph(undo_stack = None)
+        self.doClearAndInitalizeFlowChartArea()
 
-        self.ndGraph.register_nodes(list(self.uiNodeCollection.values()))
-        self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
+    # def nodeGraphClean(self):        
+    #     if hasattr(self, "ndGraph") and self.ndGraph:            
+    #         self.ndGraph.delete_nodes(self.ndGraph.all_nodes(), push_undo=False)
+    #         self.clear_session()
+    #         self.clear_selection()
+    #         self._undo_stack.clear()
+    #         #self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
+    #         self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.ndGraph.widget, self.parentUi.wgCanvas)
+    #         self.ndGraph.close()
+    #         del(self.ndGraph)
+    #         self.tls.doCleanMemory()
+    #
+    #     self.tls.info(f"Creating node graph ui objects...")
+    #     self.ndGraph = NodeGraph(undo_stack = None)
+    #
+    #     self.ndGraph.register_nodes(list(self.uiNodeCollection.values()))
+    #     self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
+    #
+    #     self.tls.info(f"Node graph signal connectors initializing.")
+    #     self.ndGraph.node_selected.connect(self.doFlowNodeSelected)
+    #     self.ndGraph.node_selection_changed.connect(self.doFlowNodeSelectionChanged)
+    #     self.ndGraph.nodes_deleted.connect(self.doFlowEdited)
+    #     self.ndGraph.port_connected.connect(self.doFlowEdited)
+    #     self.ndGraph.port_disconnected.connect(self.doFlowEdited)
+    #     self.ndGraph.widget.currentWidget().custom_data_dropped.connect(self.doFlowNodeDropped)
+    #     self.ndGraph.widget.currentWidget().custom_key_pressed.connect(self.doFlowKeyPressed)
+    #
+    #
 
-        self.tls.info(f"Node graph signal connectors initializing.")
-        self.ndGraph.node_selected.connect(self.doFlowNodeSelected)
-        self.ndGraph.node_selection_changed.connect(self.doFlowNodeSelectionChanged)
-        self.ndGraph.nodes_deleted.connect(self.doFlowEdited)
-        self.ndGraph.port_connected.connect(self.doFlowEdited)
-        self.ndGraph.port_disconnected.connect(self.doFlowEdited)
-        self.ndGraph.widget.currentWidget().custom_data_dropped.connect(self.doFlowNodeDropped)
-        self.ndGraph.widget.currentWidget().custom_key_pressed.connect(self.doFlowKeyPressed)
 
     def doFlowKeyPressed(self, eve):
         if (eve.key() == QtCore.Qt.Key_Delete):
@@ -313,7 +331,7 @@ class PTSFlows(object):
         self.ndGraph._viewer.set_zoom(zoomVal + 0.0000000000001)
         self.ndGraph._viewer.set_zoom(zoomVal)
         QApplication.processEvents()
-        self.flowRunner.initializer()
+        if hasattr(self, 'flowRunner'): self.flowRunner.initializer()
 
     def getCurrentSession(self):
         return self.ndGraph._model.session
@@ -332,7 +350,7 @@ class PTSFlows(object):
                 doSave = self.qttls.showYesNoBox(self.tls.getAppName(), "Do you want to save this to file?")
                 if doSave:
                     self.doSaveFlowAs()
-        self.doClearFlow()
+        self.doClearFlowForNew()
           
     def doOpenFlow(self):
         if self.isFlowFileOpen():
@@ -348,7 +366,7 @@ class PTSFlows(object):
         
         flowFile = self.qttls.getFile('Select a flow file to open...', self.ptsFlowsPath, 'Flow Files (*.flow);;All Files (*)')
         if flowFile:
-            self.doClearFlow()                        
+            self.doClearFlowForNew()                        
             self.coreLoadFlow(flowFile)
 
     def doSaveFlow(self):
@@ -372,24 +390,51 @@ class PTSFlows(object):
                 self.tls.info("Nothing to save!")
         else:
             self.tls.info("Nothing to save!")
-            
-    def doClearFlow(self):
-        self.ndGraph.blockSignals(True)
-        self.ndGraph.scene().blockSignals(True)
-        self.ndGraph.scene().viewer().blockSignals(True)        
-        self.ndGraph.scene().viewer().all_nodes().clear()        
-        self.ndGraph.scene().viewer().all_pipes().clear()
-        self.ndGraph.clear_selection()
-        self.ndGraph.clear_session()
-        self.ndGraph.clear_undo_stack()
-        self.ndGraph.undo_stack().clear()
-        self.ndGraph.reset_zoom()
-        self.doClearProps()
-        self.ndGraph.blockSignals(False)
-        self.ndGraph.scene().blockSignals(False)
-        self.ndGraph.scene().viewer().blockSignals(False)
-        self.refreshFlow()
-                
+
+    def doClearAndInitalizeFlowChartArea(self):
+        
+        if hasattr(self, "ndGraph") and self.ndGraph:
+            self.ndGraph.blockSignals(True)
+            self.ndGraph.scene().blockSignals(True)
+            self.ndGraph.scene().viewer().blockSignals(True)        
+            self.ndGraph.scene().viewer().all_nodes().clear()        
+            self.ndGraph.scene().viewer().all_pipes().clear()
+            self.ndGraph.delete_nodes(self.ndGraph.all_nodes(), push_undo=False)                        
+            self.ndGraph.clear_selection()
+            self.ndGraph.clear_session()
+            self.ndGraph.clear_undo_stack()
+            self.ndGraph.undo_stack().clear()
+            self.ndGraph.reset_zoom()
+            self.doClearProps()          
+            #self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
+            self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.ndGraph.widget, self.parentUi.wgCanvas)
+            self.ndGraph.close()
+            self.ndGraph.blockSignals(False)
+            self.ndGraph.scene().blockSignals(False)
+            self.ndGraph.scene().viewer().blockSignals(False)
+            self.ndGraph.widget.deleteLater()
+            del(self.ndGraph)
+            self.tls.doCleanMemory()
+
+        self.tls.info(f"Creating node graph ui objects...")
+        self.ndGraph = NodeGraph(undo_stack = None)
+
+        self.ndGraph.register_nodes(list(self.uiNodeCollection.values()))
+        self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget, delete=0)
+
+        self.tls.info(f"Node graph signal connectors initializing.")
+        self.ndGraph.node_selected.connect(self.doFlowNodeSelected)
+        self.ndGraph.node_selection_changed.connect(self.doFlowNodeSelectionChanged)
+        self.ndGraph.nodes_deleted.connect(self.doFlowEdited)
+        self.ndGraph.port_connected.connect(self.doFlowEdited)
+        self.ndGraph.port_disconnected.connect(self.doFlowEdited)
+        self.ndGraph.widget.currentWidget().custom_data_dropped.connect(self.doFlowNodeDropped)
+        self.ndGraph.widget.currentWidget().custom_key_pressed.connect(self.doFlowKeyPressed)
+        self.refreshFlow()        
+                    
+    def doClearFlowForNew(self):
+        self.doClearAndInitalizeFlowChartArea()
+
         self.currentLoadedFlowName = None
         self.currentLoadedFlowFile = None
         self.lastNodeSelected = None
@@ -542,6 +587,7 @@ class PTSFlows(object):
             clear_session=False,
             clear_undo_stack=True
         )
+        #self.doClearAndInitalizeFlowChartArea()
         self.ndGraph._model.session = file_path
         for eachNode in self.ndGraph.all_nodes():
             eachNode.props = fileContent['nodeProps'][eachNode.NODE_NAME]
