@@ -1,7 +1,7 @@
 __appname__ = "PyTasky"
 __author__  = "Kumaresan"
 __created__ = "2025-03-07"
-__updated__ = "2025-07-08"
+__updated__ = "2025-07-09"
 
 '''
 
@@ -62,14 +62,17 @@ class core():
         #ReArrange UI
         self.doGUIRearrange()
 
+        #Load Trees
         self.doLoadNodeTree()
         self.doLoadScriptTree()
         self.doLoadFlowTree()
         self.doLoadUITree()
         self.doToolBars()
-
+        
+        #UI Signals
         self.doSignalConnects()
 
+        #Core Objects
         self.flows = ptsFlows.PTSFlows(self)
         
         self.tls.share["PTS_UI"] = self.ui
@@ -113,7 +116,7 @@ class core():
         # self.ui.splitter2 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         # self.ui.debugTreeHolderLayout.addWidget(self.ui.splitter2)
         # self.ui.splitter2.addWidget(self.ui.debugListHolder)
-        # self.ui.splitter2.addWidget(self.ui.debugInfoHolder)        
+        # self.ui.splitter2.addWidget(self.ui.debugInfoHolder)
 
     def doToolBars(self):
         self.tb01 = self.ui.addToolBar('Flow Tools')
@@ -361,7 +364,6 @@ class core():
 
     def doFlowsTreeDblClicked(self, label, fileFolder, typ, item):
         if typ == "file":
-            self.flows.doClearAndInitalizeFlowChartArea()
             self.flows.coreLoadFlow(fileFolder)
 
     def doUITreeDblClicked(self, label, fileFolder, typ, item):

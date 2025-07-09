@@ -62,24 +62,16 @@ class PTSFlows(object):
         self.isFlowEdited = 0
         self.currentLoadedFlowName = None
         self.currentLoadedFlowFile = None
-
-        self.doFlowInitializer()
+        
+        self.convertGenerateUINodeCollections()
+        self.doClearAndInitalizeFlowChartArea()
 
         self.createNewFlowRunner(self.PTS)
-        # self.flowRunner = ptsFlowRunner.PTSFlowRunner(self.PTS)
-        # self.flowRunner.PTS_UI = self.parentUi
-        # self.flowRunner.nodeExecutionInprogress.connect(self.doNodeExecutionInProgress)
-        # self.flowRunner.nodeRejected.connect(self.doNodeDisable)
-        # self.flowRunner.flowExecutionCompleted.connect(self.doFlowExecutionCompleted)
-        # self.flowRunner.flowExecutionStatus.connect(self.doFlowExecutionStatus)
-        # self.flowRunner.executeUINodeAction.connect(self.doExecuteUINodeExecution)
 
         # Additional info
         self.tls.info(f"----Available Nodes----")
         for each in self.uiNodeCollection.keys():
             self.tls.info(f"{each} - {self.uiNodeCollection[each]}")
-        
-        self.doClearAndInitalizeFlowChartArea()
         
     def createNewFlowRunner(self, parent=None):        
         if hasattr(self, "flowRunner") and self.flowRunner:
@@ -152,41 +144,6 @@ class PTSFlows(object):
             print('----------------------------------')
             self.flowRunner.terminateFlow("Node execution failed.")
             self.doFlowExecutionCompleted(None)
-
-    def doFlowInitializer(self):
-        self.tls.info(f"Preparing node graph setup...")
-        self.convertGenerateUINodeCollections()
-        self.doClearAndInitalizeFlowChartArea()
-
-    # def nodeGraphClean(self):        
-    #     if hasattr(self, "ndGraph") and self.ndGraph:            
-    #         self.ndGraph.delete_nodes(self.ndGraph.all_nodes(), push_undo=False)
-    #         self.clear_session()
-    #         self.clear_selection()
-    #         self._undo_stack.clear()
-    #         #self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
-    #         self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.ndGraph.widget, self.parentUi.wgCanvas)
-    #         self.ndGraph.close()
-    #         del(self.ndGraph)
-    #         self.tls.doCleanMemory()
-    #
-    #     self.tls.info(f"Creating node graph ui objects...")
-    #     self.ndGraph = NodeGraph(undo_stack = None)
-    #
-    #     self.ndGraph.register_nodes(list(self.uiNodeCollection.values()))
-    #     self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
-    #
-    #     self.tls.info(f"Node graph signal connectors initializing.")
-    #     self.ndGraph.node_selected.connect(self.doFlowNodeSelected)
-    #     self.ndGraph.node_selection_changed.connect(self.doFlowNodeSelectionChanged)
-    #     self.ndGraph.nodes_deleted.connect(self.doFlowEdited)
-    #     self.ndGraph.port_connected.connect(self.doFlowEdited)
-    #     self.ndGraph.port_disconnected.connect(self.doFlowEdited)
-    #     self.ndGraph.widget.currentWidget().custom_data_dropped.connect(self.doFlowNodeDropped)
-    #     self.ndGraph.widget.currentWidget().custom_key_pressed.connect(self.doFlowKeyPressed)
-    #
-    #
-
 
     def doFlowKeyPressed(self, eve):
         if (eve.key() == QtCore.Qt.Key_Delete):
@@ -309,7 +266,8 @@ class PTSFlows(object):
         Scan node folder and convert it to qt nodes:
         '''
         self.uiNodeCollection = {}
-
+        
+        self.tls.info(f"Scan and Prepare node collections...")
         pts = ptsNodeModuleScanner.PTSNodeModuleScanner(self.console)
         pts.scanNodeModuleFolder()
 
@@ -365,8 +323,7 @@ class PTSFlows(object):
                     self.doSaveFlowAs()  
         
         flowFile = self.qttls.getFile('Select a flow file to open...', self.ptsFlowsPath, 'Flow Files (*.flow);;All Files (*)')
-        if flowFile:
-            self.doClearFlowForNew()                        
+        if flowFile:                        
             self.coreLoadFlow(flowFile)
 
     def doSaveFlow(self):
@@ -406,7 +363,6 @@ class PTSFlows(object):
             self.ndGraph.undo_stack().clear()
             self.ndGraph.reset_zoom()
             self.doClearProps()          
-            #self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget)
             self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.ndGraph.widget, self.parentUi.wgCanvas)
             self.ndGraph.close()
             self.ndGraph.blockSignals(False)
@@ -416,13 +372,13 @@ class PTSFlows(object):
             del(self.ndGraph)
             self.tls.doCleanMemory()
 
-        self.tls.info(f"Creating node graph ui objects...")
+        self.tls.info(f"Prepare new nodegraph canvas...")
         self.ndGraph = NodeGraph(undo_stack = None)
 
         self.ndGraph.register_nodes(list(self.uiNodeCollection.values()))
         self.qttls.swapWidget(self.parentUi.lytCanvasHolder, self.parentUi.wgCanvas, self.ndGraph.widget, delete=0)
 
-        self.tls.info(f"Node graph signal connectors initializing.")
+        #Node graph signal connectors initializing
         self.ndGraph.node_selected.connect(self.doFlowNodeSelected)
         self.ndGraph.node_selection_changed.connect(self.doFlowNodeSelectionChanged)
         self.ndGraph.nodes_deleted.connect(self.doFlowEdited)
@@ -581,13 +537,13 @@ class PTSFlows(object):
             fileContent = None
             self.tls.debug('Cannot read data from file.\n{}'.format(e))
         if not fileContent: return
-        self.ndGraph.clear_session()
+
+        self.doClearAndInitalizeFlowChartArea()
         self.ndGraph.deserialize_session(
             fileContent,
             clear_session=False,
             clear_undo_stack=True
         )
-        #self.doClearAndInitalizeFlowChartArea()
         self.ndGraph._model.session = file_path
         for eachNode in self.ndGraph.all_nodes():
             eachNode.props = fileContent['nodeProps'][eachNode.NODE_NAME]
@@ -607,5 +563,6 @@ class PTSFlows(object):
         #self.tls.doCleanMemory()
         self.PTS.doSetTitle(isEdited=0, flowName=self.currentLoadedFlowName)    
         self.PTS.disableAllToolBarAction()        
-        self.PTS.enableToolBarActionsFor("loaded")           
+        self.PTS.enableToolBarActionsFor("loaded")
+
           

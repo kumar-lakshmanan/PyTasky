@@ -39,7 +39,7 @@ import <module2>
 NAME = "NODENAME"	#NodeName - Avoid Space & Special Chars
 
 INPUTS = [ "IN-PORT1" , "IN-PORT2" ....  ]
-
+OUTPUTS = [ "OUT-PORT1" , "OUT-PORT2" ....  ]
 
 PROPS = {}
 PROPS["PROP1"] = "1"
@@ -73,6 +73,7 @@ import kTools; tls = kTools.GetKTools()
 NAME = "SimpleConcator"
 
 INPUTS = [ "string1" , "string2"]
+OUTPUTS = [ "out1" , "out2"]
 
 PROPS = {}
 PROPS["ConcatingStr"] = "+"

@@ -19,7 +19,7 @@
 * sys		-	system nodes. No action will be involved. as its action logic present inside.
 * ui		-	ui based node. these nodes cant be executed in unix headless mode.
 * multiop	-	output will be shared with multiple nodes.
-* noop		-	node wont have output connector. its output wont be stored or cared.
+* loop		-	node wont have output connector. its output wont be stored or cared.
 * condition	-	condition check node (along with sys)
 * loop		- 	loops the next node given list number of time.(along with sys)
 
