@@ -559,10 +559,35 @@ from .ptsNodeModuleScanner import PTSNodeModuleScanner
 from . import PyTaskyLookUps 
 from types import SimpleNamespace
 
-
-def flowSignalsHndl(inp):
-    #print(inp)
-    pass
+def flowSignalsHndl(data):
+    tls = kTools.KTools()
+    lst = tls.getSafeDictValue(data, "lst", [])
+    msg = tls.getSafeDictValue(data, "msg", None)
+    if msg:
+        tls.info(f"{msg}")
+        
+    if len(lst):
+        act = lst[0]
+        if act == "fetch_node":
+            n = lst[1]
+            node = lst[2]                                
+            # print(f"{n}.Processing {node}... ",end='')
+            # tls.info(f"{n} Pushing back [{node}], No input ready.")                
+        if act == "pushback": 
+            n = lst[1]
+            node = lst[2]                                
+            tls.info(f"{n}.Waiting {node}!")            
+        if act == "pushback_loopnode": 
+            n = lst[1]
+            node = lst[2]                                
+            tls.info(f"{n}.Waiting {node}!")                   
+        if act == "executing": 
+            n = lst[1]
+            node = lst[2]                                
+            tls.info(f"{n}.Executing {node}...")   
+        if act == "scan_node":
+            n = lst[1]
+            tls.info(f"Scanning [{n}]...")   
 
 if __name__ == "__main__":
 
@@ -576,7 +601,7 @@ if __name__ == "__main__":
     PTS.tls = tls
     PTS.console = tls.share['console']
 
-    PNS = PTSNodeModuleScanner(PTS.console)
+    PNS = PTSNodeModuleScanner()
     PNS.ptsNodesPath = "G:/pyworkspace/PyTasky/data/ptsNodes"
     PNS.scanNodeModuleFolder()  
         

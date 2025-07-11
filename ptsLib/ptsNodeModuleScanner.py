@@ -3,42 +3,38 @@ Created on 12-Mar-2025
 
 @author: kayma
 '''
-import os,sys
-from PyQt5 import QtCore, QtGui, Qsci, QtWidgets
-from PyQt5.Qsci import (QsciScintilla, QsciLexerPython)
-from PyQt5.Qt import QLineEdit
-from PyQt5.QtCore import (QFile, QFileInfo, QPoint, QSettings, QSignalMapper, QSize, QTextStream, Qt,)
-from PyQt5.QtGui import (QIcon, QKeySequence, QFont, QColor)
-from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QTextEdit, QWidget,)
-from inspect import getmodule
-from PyQt5.uic import loadUi
-from NodeGraphQt import NodeGraph
-from NodeGraphQt import BaseNode
-from NodeGraphQt import BaseNodeCircle
-from NodeGraphQt import GroupNode
-
-from pathlib import Path
-from kQt import kQtTools
+try:
+    from NodeGraphQt import BaseNode
+    from NodeGraphQt import BaseNodeCircle
+    from NodeGraphQt import GroupNode
+    QT_NODES_AVAILABLE = True
+except ImportError:
+    from types import SimpleNamespace    
+    QT_NODES_AVAILABLE = False
+    
 import kTools
-import json
 
 class PTSNodeModuleScanner(object):
 
-    def __init__(self, console=None):
+    def __init__(self):
         self.tls = kTools.KTools()
-        self.console = console
+        self.console = self.tls.getSafeDictValue(self.tls.share, 'console', None) 
         self.ptsNodesPath = self.tls.getSafeConfig(['pts', 'nodesPath'])
         self.allNodes = {}
         self.sysNodes = {}
         self.customNodes = {}
 
-    def _getQTBaseNode(self, name=""):
-        if name == "Circle":
-            return BaseNodeCircle
-        elif name == "Box":
-            return GroupNode
+    def _getBaseNode(self, nodeTags, splprops):
+        styleName = self.tls.getSafeDictValue(splprops, 'NodeStyle', None)
+        if QT_NODES_AVAILABLE:
+            if styleName == "Circle":
+                return BaseNodeCircle
+            elif styleName == "Box":
+                return GroupNode
+            else:
+                return BaseNode
         else:
-            return BaseNode
+            return SimpleNamespace            
 
     def _isItSystemNode(self, nodeTags):
         return self._isTagPresentInTags('sys', nodeTags)
@@ -78,8 +74,8 @@ class PTSNodeModuleScanner(object):
         attrb['NODE_TAGS'] = tags
         attrb['NODE_SPLPROPS'] = splprops
         attrb['__init__'] = self._generateDynamicConstructor(ips, ops, props)
-        qtNodeModule = self._getQTBaseNode(splprops['NodeStyle'] if 'NodeStyle' in splprops else None)
-        return type(nodeModuleName, (qtNodeModule,), attrb)
+        nodeBaseMod = self._getBaseNode(tags, splprops)
+        return type(nodeModuleName, (nodeBaseMod,), attrb)
 
     def scanNodeModuleFolder(self):
         advConfig = {}

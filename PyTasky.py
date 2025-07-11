@@ -1,7 +1,7 @@
 __appname__ = "PyTasky"
 __author__  = "Kumaresan"
 __created__ = "2025-03-07"
-__updated__ = "2025-07-09"
+__updated__ = "2025-07-11"
 
 '''
 
@@ -49,7 +49,8 @@ class core():
         self.tls = kTools.KTools()
         self.qttls = kQtTools.KQTTools()
         self.console = kCodeExecuter.KCodeExecuter()
-        self.tls.qapp = qapp
+        self.tls.share['console'] = self.console
+        self.tls.qapp = qapp        
         self.disableLogDisplay = 0
 
         #Main UI ready

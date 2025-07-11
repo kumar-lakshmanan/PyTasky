@@ -87,7 +87,6 @@ class PTSFlows(object):
         self.flowRunner.executeUINodeAction.connect(self.doExecuteUINodeExecution)
 
     def flowSignalsHndl(self, data):
-
         lst = self.tls.getSafeDictValue(data, "lst", [])
         msg = self.tls.getSafeDictValue(data, "msg", None)
         if msg:
@@ -268,7 +267,7 @@ class PTSFlows(object):
         self.uiNodeCollection = {}
         
         self.tls.info(f"Scan and Prepare node collections...")
-        pts = ptsNodeModuleScanner.PTSNodeModuleScanner(self.console)
+        pts = ptsNodeModuleScanner.PTSNodeModuleScanner()
         pts.scanNodeModuleFolder()
 
         for clsName in pts.allNodes:
