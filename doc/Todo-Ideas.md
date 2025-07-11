@@ -42,3 +42,8 @@
 * seleinum integerate
 * web interface
 
+### Quick Idea ###
+* Create nodes from Class Functions  
+	* How to handle the class variable and values
+* sys modules hide inside the main python
+

@@ -5,37 +5,19 @@ Created on 21-Mar-2025
 '''
 
 import os, sys, time, json
-from PyQt5 import QtCore, QtWidgets
 import code
 import kTools
-from PyQt5.uic import loadUi
 import kCodeExecuter
-from kQt import kQtTreeWidget
-from kQt import kQtTools
 
-class PTSFlowRunner(QtCore.QThread):
-    """
-    Only flow execution . No node mode refs.
-    Read the flow file and execute
-    """
+class PTSExecFlowRunner():
 
-    flowExecutionCompleted = QtCore.pyqtSignal(str)
-    flowExecutionStatus = QtCore.pyqtSignal(str)
-    nodeExecutionInprogress = QtCore.pyqtSignal(str)
-    nodeRejected = QtCore.pyqtSignal(str)
-    executeUINodeAction = QtCore.pyqtSignal(object, object, object)
-    flowDebugInfo = QtCore.pyqtSignal(object, object, object, object, object)
-    
     def __init__(self, parent=None):
         super().__init__()
-        self.tls = kTools.KTools()
         self.PTS = parent
-        self.ui = self.PTS.ui
-        self.console = self.PTS.console if self.PTS else kCodeExecuter.KCodeExecuter();
-        self.flowDebugInfo.connect(self.debugInfoUpdater)
-        self.ui.lstOutputs.itemClicked.connect(self.debugNodeOutput)
+        self.tls = self.PTS.tls
+        self.console = self.PTS.console
+        self.ui = None
         self.initializer()
-        
 
     def initializer(self):
         
@@ -43,21 +25,6 @@ class PTSFlowRunner(QtCore.QThread):
         self.currentExecutionNodes = []
         self.rejectedNodes = []
         self.nodesOutputData = {}
-
-        self.paused = False  # Pause flag
-        self.running = True  # Stop flag
-        self.mutex = QtCore.QMutex()
-        self.condition = QtCore.QWaitCondition()
-        
-        #DEBUG RESET
-        self.ui.lstCompleted.clear()
-        self.ui.lstOutputs.clear()
-        self.ui.lstQueue.clear()
-        self.ui.lblCurrentNode.setText("")
-        self.ui.txtData.setPlainText("")
-
-        self.terminateFlowExecution = False
-        self.isFlowRunning = False
     
     def preSetup(self):
         '''
@@ -92,13 +59,6 @@ class PTSFlowRunner(QtCore.QThread):
         self.rejectedNodes = []
         self.nodesOutputData = {}
 
-        #DEBUG RESET
-        self.ui.lstCompleted.clear()
-        self.ui.lstOutputs.clear()
-        self.ui.lstQueue.clear()
-        self.ui.lblCurrentNode.setText("")
-        self.ui.txtData.setPlainText("")
-
         flowStrData = self.tls.getFileContent(self.flowFile)
         flowData = json.loads(flowStrData)
         
@@ -109,7 +69,6 @@ class PTSFlowRunner(QtCore.QThread):
             typ_ = flowData["nodes"][each]['type_']
             nodeModName = typ_.replace('nodeGraphQt.nodes.','')
             
-
             nodeModule = self.console.getModule(nodeModName)
             if not nodeModule: self.tls.errorAndExit(f"Missing module {nodeModName} for Node {name}")
 
@@ -209,41 +168,21 @@ class PTSFlowRunner(QtCore.QThread):
 
         #---------------------------------------------------
         self.tls.info(f'-----Starting flow execution-----')
-        self.flowExecutionStatus.emit(f'Executing the flow...')
         self.tls.publishSignal("flowevent", { "msg": "Executing the flow..." })
 
         self.nodesOutputData = {}
-        self.terminateFlowExecution = False
-        self.isFlowRunning = False
         inputForNode = None
         currentNode = None
 
         self.cnt = 0
-        while len(self.currentExecutionNodes) and not self.terminateFlowExecution:
-            self.isFlowRunning = True
+        while len(self.currentExecutionNodes):
             self.cnt = self.cnt + 1
-            self.flowDebugInfo.emit(self.currentExecutionNodes, self.nodesOutputData, currentNode, None, None)            
             currentNode = self.currentExecutionNodes.pop()
-            self.flowDebugInfo.emit(None, None, currentNode, None, None)
-            self.flowExecutionStatus.emit(f'>>>>>> {self.cnt}.Fetched node: {currentNode["name"]}')
             self.tls.publishSignal("flowevent", { "lst" : ["fetch_node", self.cnt, currentNode['name'] ] })
-            self.nodeExecutionInprogress.emit(f'{currentNode["name"]}')
-
-            #-------Thread Hold and Resume OnDemand - For Debugging------
-            if self.debugMode: self.pause()
-            self.mutex.lock()
-            while self.paused:
-                #"Flow waiting for debugging
-                self.condition.wait(self.mutex)
-            self.mutex.unlock()
-            if not self.running: break
-            #-------Thread Hold and Resume OnDemand - For Debugging------
 
             #Is not IP Ready for proceeding and its not a starter node to ignore ip.
             if not self.isInputReadyForNode(currentNode):
                 self.currentExecutionNodes.insert(0,currentNode)
-                self.flowDebugInfo.emit(self.currentExecutionNodes, None, None, None, None)
-                self.flowExecutionStatus.emit(f">>>>>> {self.cnt}.Pushingback {currentNode['name']} node, Inputs not yet ready")
                 self.tls.publishSignal("flowevent", { "lst" : ["pushback", self.cnt, currentNode['name'] ] })               
                 continue
 
@@ -264,7 +203,6 @@ class PTSFlowRunner(QtCore.QThread):
                 for eachNextNode in nextNodes:
                     if not eachNextNode in self.currentExecutionNodes and not eachNextNode in self.rejectedNodes:
                         self.currentExecutionNodes.append(eachNextNode)
-                self.flowDebugInfo.emit(self.currentExecutionNodes, None, currentNode, None, None)                
 
             #If its Sys Node
             elif self._isItSystemNodeForNode(currentNode) and not self._isItCustomNodeForNode(currentNode):
@@ -287,7 +225,6 @@ class PTSFlowRunner(QtCore.QThread):
                         for eachNodeToReject in nodesToReject:
                             if not eachNodeToReject in self.rejectedNodes:
                                 self.rejectedNodes.append(eachNodeToReject)
-                                self.nodeRejected.emit(f'{eachNodeToReject["name"]}')
 
                         #If any reject node present in mainlist remove it
                         for eachNodeToReject in nodesToReject:
@@ -297,7 +234,6 @@ class PTSFlowRunner(QtCore.QThread):
                         nextNode = self.getNextNodeInNodeAndPort(currentNode, conTruePortName)
                         if not nextNode in self.currentExecutionNodes: 
                             self.currentExecutionNodes.append(nextNode)
-                        self.flowDebugInfo.emit(self.currentExecutionNodes, None, currentNode, None, None) 
 
                     else:
                         #Save Condition True Output for later use
@@ -308,7 +244,6 @@ class PTSFlowRunner(QtCore.QThread):
                         for eachNodeToReject in nodesToReject:
                             if not eachNodeToReject in self.rejectedNodes:
                                 self.rejectedNodes.append(eachNodeToReject)
-                                self.nodeRejected.emit(f'{eachNodeToReject["name"]}')
 
                         #If any reject node present in mainlist remove it
                         for eachNodeToReject in nodesToReject:
@@ -318,7 +253,6 @@ class PTSFlowRunner(QtCore.QThread):
                         nextNode = self.getNextNodeInNodeAndPort(currentNode, conFalsePortName)
                         if not nextNode in self.currentExecutionNodes: 
                             self.currentExecutionNodes.append(nextNode)
-                        self.flowDebugInfo.emit(self.currentExecutionNodes, None, currentNode, None, None)                       
 
                 #Sys Node - Loop
                 if self._isTagPresentInTags("loop", currentNode['tags']):
@@ -346,8 +280,6 @@ class PTSFlowRunner(QtCore.QThread):
                             #Is not IP Ready for proceeding and its not a starter node to ignore ip.
                             if not self.isInputReadyForNode(loopCoreNode):
                                 self.currentExecutionNodes.insert(0,currentNode)
-                                self.flowDebugInfo.emit(self.currentExecutionNodes, None, None, None, None)
-                                self.flowExecutionStatus.emit(f">>>>>> {self.cnt}.Pushingback loop node {loopCoreNode['name']}, Inputs not yet ready")
                                 self.tls.publishSignal("flowevent", { "lst" : ["pushback_loopnode", self.cnt, loopCoreNode['name'] ] })                                
                                 stopLoopProcessing = True
                                 break
@@ -377,27 +309,14 @@ class PTSFlowRunner(QtCore.QThread):
                         for eachNextNode in nextNodes:
                             if not eachNextNode in self.currentExecutionNodes and not eachNextNode in self.rejectedNodes:
                                 self.currentExecutionNodes.append(eachNextNode)
-                        self.flowDebugInfo.emit(self.currentExecutionNodes, None, currentNode, inputForNode, None) 
             else:
                 self.terminateFlow(f"Unknown node. Node should be either system or custom. But this is not valid: {currentNode['name']}")
             
-            self.flowDebugInfo.emit(None, None, None, None, currentNode)
-        
-        if self.terminateFlowExecution:
-            self.tls.info(f'-----Flow execution terminated!-----')
-            self.flowExecutionStatus.emit(f'-----Flow execution terminated!-----')
-            self.tls.publishSignal("flowevent", { "msg" : "Flow terminated!" })
-        else:
-            self.tls.info(f'-----Flow execution completed!-----')
-            self.flowExecutionStatus.emit(f'-----Flow execution completed!-----')
-            self.tls.publishSignal("flowevent", { "msg" : "Flow executed!" })
-        self.flowExecutionCompleted.emit(None)
-        self.isFlowRunning = False
+        self.tls.publishSignal("flowevent", { "msg" : "Flow executed!" })
         
     def terminateFlow(self, msg="Flow Terminated"):
         self.tls.info(">>>>>> Terminating Flow <<<<<<<")
         self.tls.info(msg)
-        self.terminateFlowExecution = True
 
     def getNextNodeInNodeAndPort(self, node, portName):
         outputConnections = node['connectedop']
@@ -425,25 +344,6 @@ class PTSFlowRunner(QtCore.QThread):
         getConnectedNodesFor(parentNode, allConnectedNodes)
         return allConnectedNodes
 
-    def pause(self):
-        """Pause execution"""
-        self.paused = True
-
-    def stepNext(self):
-        """temp step next execution"""
-        self.paused = False
-        self.condition.wakeAll()  # Resume thread execution
-
-    def resume(self):
-        """Resume execution"""
-        self.debugMode = False
-        self.stepNext()
-
-    def stop(self):
-        """Stop execution"""
-        self.running = False
-        self.resume()  # Ensure thread exits
-
     def addNodeOutputWithValue(self, node, value):
         nodeName = node['name']
         ops = node['actualop']
@@ -458,7 +358,7 @@ class PTSFlowRunner(QtCore.QThread):
             customModule = self.console.getModule(nodescript)
             customModule.NAME = node['name']
             customModule.PROPS = node['props']
-            customModule.PTS = self.PTS
+            customModule.PTS = self.PTS if hasattr(self, 'PTS') else None
             if hasattr(customModule, 'ACTION'):
                 self.tls.info(f"Custom module found: {customModule}")
                 modToExecute = customModule
@@ -471,7 +371,7 @@ class PTSFlowRunner(QtCore.QThread):
             defaultMod = node['module']
             defaultMod.NAME = node['name']
             defaultMod.PROPS = node['props']
-            defaultMod.PTS = self.PTS
+            defaultMod.PTS = self.PTS if hasattr(self, 'PTS') else None
             modToExecute = defaultMod
         #--------------------------------------------------
         response = None
@@ -482,17 +382,12 @@ class PTSFlowRunner(QtCore.QThread):
             #we will wait till the ui window get closed in node execution and will wait till we get a call back invoked.
 
             #Updating console so that users can use this variables to see the values
-            self.flowExecutionStatus.emit(f">>>>>> {self.cnt}.Executing core action of {node['name']}")
             self.tls.publishSignal("flowevent", { "lst" : ["executing", self.cnt, node['name']] })            
             self.updateExecutionLocalsWithNeededInput(request)
             if self._isTagPresentInTags('ui', node['tags']):
                 def resultReadyFn(result):
                     nonlocal response
                     response = result
-                    loop.quit()
-                loop = QtCore.QEventLoop()
-                self.executeUINodeAction.emit(modToExecute, request, resultReadyFn)
-                loop.exec_()
             else:
                 if hasattr(modToExecute, "ACTION"):
                     response = modToExecute.ACTION(request)
@@ -599,7 +494,6 @@ class PTSFlowRunner(QtCore.QThread):
     def addNodeOutput(self, nodeName, portName, data):
         tag = self.getOutputTag(nodeName, portName)
         self.nodesOutputData[tag] = data
-        self.flowDebugInfo.emit(None, None, None, self.nodesOutputData, None)
 
     def removeNodeOutputEntry(self, nodeName, portName):
         tag = self.getOutputTag(nodeName, portName)
@@ -660,55 +554,35 @@ class PTSFlowRunner(QtCore.QThread):
         if self._isTagPresentInTags('multiip', tagList):
             return [(DefaultInputPortName,1)]
         return [DefaultInputPortName]
+
+from .ptsNodeModuleScanner import PTSNodeModuleScanner
+from . import PyTaskyLookUps 
+from types import SimpleNamespace
+
+
+def flowSignalsHndl(inp):
+    #print(inp)
+    pass
+
+if __name__ == "__main__":
+
+    tls = kTools.KTools("KMXExec", PyTaskyLookUps, "G:/pyworkspace/PyTasky/pytasky_config.json")
+    tls.share['console'] = kCodeExecuter.KCodeExecuter()
     
-    # def debugWinClear(self):        
-    #     # self.ui.splitter2.addWidget(self.ui.debugListHolder)
-    #     # self.ui.splitter2.addWidget(self.ui.debugInfoHolder) 
-    #     # debugDataValue
-    #     self.ui.treeDebugNodes.clear()
-    #     self.ui.treeDebugData.clear()
-    #     self.ui.debugDataValue.setHtml("")
-    #
-    # def debugUpdateNodeList(self, latestList):
-    #     self.debugWinClear()
-    #     for each in latestList:
-    #         self.debugWinNodeAdd(each['name'])
-    #
-    # def debugWinNodeAdd(self, nodeName):     
-    #     if not self._debugWinFindItem(self.ui.treeDebugNodes, nodeName):
-    #         item = self.qtTree.createItem(nodeName)
-    #         self.qtTree.addNewRoot(self.ui.treeDebugNodes, item)
-    #
-    # def debugWinNodeAddToLast(self, nodeName):     
-    #     if not self._debugWinFindItem(self.ui.treeDebugNodes, nodeName):        
-    #         item = self.qtTree.createItem(nodeName)
-    #         self.qtTree.addNewRootLast(self.ui.treeDebugNodes, item, 0)
-    #
-    # def debugWinNodeRemove(self, nodeName):             
-    #     item = self._debugWinFindItem(self.ui.treeDebugNodes, nodeName)
-    #     if item: self._debugWinRemoveItem(item)
-    #
-    # def debugWinDataAdd(self, nodeName, value):
-    #     if not self._debugWinFindItem(self.ui.treeDebugData, nodeName):     
-    #         item = self.qtTree.createItem(nodeName, value)
-    #         self.qtTree.addNewRoot(self.ui.treeDebugData, item)
-    #
-    # def debugWinDataRemove(self, nodeName):             
-    #     item = self._debugWinFindItem(self.ui.treeDebugData, nodeName)
-    #     if item: self._debugWinRemoveItem(item)
-    #
-    # def _debugWinFindItem(self, tree, textToFind):
-    #     root = tree.invisibleRootItem()
-    #     root_items = []
-    #     for i in range(root.childCount()):
-    #         root_items.append(root.child(i))                
-    #     for item in root_items:
-    #         if str(item.text(0)) == str(textToFind):
-    #             return item
-    #     return None
-    #
-    # def _debugWinRemoveItem(self, itemToRemove):
-    #     if itemToRemove:
-    #         parent = itemToRemove.parent()
-    #         if parent:
-    #             parent.removeChild(itemToRemove)
+    tls.createNewSignalSetup("flowevent")
+    tls.subscribeToSignal("flowevent", flowSignalsHndl)
+
+    PTS = SimpleNamespace()
+    PTS.tls = tls
+    PTS.console = tls.share['console']
+
+    PNS = PTSNodeModuleScanner(PTS.console)
+    PNS.ptsNodesPath = "G:/pyworkspace/PyTasky/data/ptsNodes"
+    PNS.scanNodeModuleFolder()  
+        
+    localRunner = PTSExecFlowRunner(PTS)
+    localRunner.flowFile =  "G:/pyworkspace/PyTasky/data/ptsFlows/simple2-datatrans.flow" 
+    localRunner.preSetup()
+    localRunner.run()    
+     
+    

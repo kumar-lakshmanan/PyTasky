@@ -1,5 +1,5 @@
 '''
-@name: InputCopier
+@name: MultiIP
 @author:  kayma
 @createdon: 26-Jun-2025
 @description:
@@ -13,16 +13,15 @@ in next step you will get all your inputs.
 #PTS_NODE
 '''
 __created__ = "16-Apr-2025"
-__updated__ = "2025-07-09"
+__updated__ = "2025-07-10"
 __author__ = "kayma"
 
-NAME = "DataTransfer"
+NAME = "MultiIP"
 
-TAGS = ["custom","shareop"]
-
-PROPS = {"output": "int(data['Variable 1-out'])"}
+TAGS = ["custom","multiip"]
 
 import kTools; tls = kTools.KTools()
 
-def ACTION(input):    
-    return PTS.console.runCommand(PROPS["output"])
+def ACTION(input):
+    print(input)    
+    return input

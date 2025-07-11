@@ -41,7 +41,7 @@ class PTSNodeModuleScanner(object):
             return BaseNode
 
     def _isItSystemNode(self, nodeTags):
-        return self._isTagPresentInTags('sys', nodeTags) and not self._isTagPresentInTags('custom', nodeTags)
+        return self._isTagPresentInTags('sys', nodeTags)
 
     def _isTagPresentInTags(self, searchTag, tagList):
         return searchTag.strip().lower() in (s.strip().lower() for s in tagList)
@@ -91,13 +91,16 @@ class PTSNodeModuleScanner(object):
             _name = _module.NAME
             _desc = _module.__doc__
             _tags = _module.TAGS if hasattr(_module, 'TAGS') else ['custom']
+            if _tags == []: _tags.append('custom')
+            _props = _module.PROPS if hasattr(_module, 'PROPS') else {}
+            _splProps = _module.SPLPROPS if hasattr(_module, 'SPLPROPS') else {}            
             _ips = _module.INPUTS if hasattr(_module, 'INPUTS') else []
             _ops = _module.OUTPUTS if hasattr(_module, 'OUTPUTS') else []
+            if not _ips or _ips == "" or len(_ips)==0: _ips = self._getDefaultInputPorts(_tags)
+            if not _ops or _ops == "" or len(_ops)==0: _ops = self._getDefaultOutputPorts(_tags)
             if len(_ips) == 0 and len(_ops) == 0:
                 self.tls.error(f"Node [{_name}] has no info about INPUT or OUTPUT. Unable to add it.")
                 continue
-            _props = _module.PROPS if hasattr(_module, 'PROPS') else {}
-            _splProps = _module.SPLPROPS if hasattr(_module, 'SPLPROPS') else {}
             newClass = self.generateNodeModule(_modName, _name, _desc, _ips, _ops, _props, _tags, _splProps)
             setattr(newClass, 'NODE_MODULE', _module)
             self.tls.addOnlyUniqueToDict(self.allNodes, _name, newClass, forceAddLatest=1)
@@ -106,6 +109,21 @@ class PTSNodeModuleScanner(object):
             else:
                 self.tls.addOnlyUniqueToDict(self.customNodes, _name, newClass, forceAddLatest=1)
 
+    def _getDefaultOutputPorts(self, tagList):
+        DefaultOutPortName = self.tls.lookUp.outputPortName
+        if self._isTagPresentInTags('iponly', tagList):
+            return []
+        if self._isTagPresentInTags('shareop', tagList):
+            return [(DefaultOutPortName,1)]
+        return [DefaultOutPortName]
+
+    def _getDefaultInputPorts(self, tagList):
+        DefaultInputPortName = self.tls.lookUp.inputPortName
+        if self._isTagPresentInTags('oponly', tagList):
+            return []
+        if self._isTagPresentInTags('multiip', tagList):
+            return [(DefaultInputPortName,1)]
+        return [DefaultInputPortName]
 
 if __name__ == "__main__":
 

@@ -11,14 +11,12 @@ STYLE 2: Will display as log string
 #PTS_NODE
 '''
 __created__ = "16-Apr-2025"
-__updated__ = "2025-07-07"
+__updated__ = "2025-07-10"
 __author__ = "kayma"
 
 NAME = "Displayer"
 
-TAGS = ["custom"]
-
-INPUTS = [ "in" ]
+TAGS = ["custom", "iponly"]
 
 PROPS = {}
 PROPS["STYLE"] = "1"
@@ -29,12 +27,12 @@ def ACTION(input):
     
     if PROPS['STYLE'] == "1":
         print("----------------------------")
-        print(str(input['in']))
+        print(str(input))
         print("----------------------------")
 
     if PROPS['STYLE'] == "2":
         print("<<<<<<<<<<<<>>>>>>>>>>>>>")
-        print(f"{input['in']}")
+        print(f"{input}")
         print("<<<<<<<<<<<<>>>>>>>>>>>>>")
 
     return None

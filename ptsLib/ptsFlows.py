@@ -564,5 +564,3 @@ class PTSFlows(object):
         self.PTS.doSetTitle(isEdited=0, flowName=self.currentLoadedFlowName)    
         self.PTS.disableAllToolBarAction()        
         self.PTS.enableToolBarActionsFor("loaded")
-
-          

@@ -10,18 +10,16 @@ data["Variable-out1"]=='add'
 #PTS_NODE
 '''
 __created__ = "2025-04-16" 
-__updated__ = "2025-07-07"
+__updated__ = "2025-07-11"
 __author__ = "kayma"
 
 NAME = "Condition"
 
 TAGS = ["sys","condition"]
 
-INPUTS = [ "inp" ]
-
 OUTPUTS = [ "True", "False"  ]
 
-PROPS = {"condition":"data['Variable-out1']=='add'"}
+PROPS = {"condition":"data['Variable-out']=='add'"}
 
 SPLPROPS = {}
 SPLPROPS["NodeStyle"] = "Circle"   #Default or Box or Circle
