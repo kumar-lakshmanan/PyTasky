@@ -1,7 +1,7 @@
 __appname__ = "PyTasky"
 __author__  = "Kumaresan"
 __created__ = "2025-03-07"
-__updated__ = "2025-07-11"
+__updated__ = "2025-07-14"
 
 '''
 
@@ -399,8 +399,11 @@ class core():
 
     def doExecuteCommandLine(self):
         val = str(self.ui.lineEdit.text()).strip()
-        res = self.console.runCommand(val)
-        if res: self.tls.info(res)
+        try:
+            res = self.console.runCommand(val)
+            if res: self.tls.info(res)
+        except Exception as e:
+            self.tls.error(e)
         self.ui.lineEdit.setText('')
         self.ui.lineEdit.setFocus()
 
