@@ -8,7 +8,6 @@ uiWin = None
 def CustomizingAction(*arg):
     uiWin = arg[0]
     print("Customizing", arg)
-    
 
 def GetUIData(*arg):
     uiWin = arg[0]    

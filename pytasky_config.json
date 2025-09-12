@@ -28,6 +28,11 @@
 				"uisPath" : "G:/pyworkspace/PyTasky/data/ptsUIs",
 				"div":"---------------------------------",
 				"qtDesignerBin" : "G:/pyworkspace/PyTasky/QtDesigner/designer.exe",
-				"scriptEditorBin" : "D:/Pyscripter/PyScripter.exe"
+				"scriptEditor" : "internal",
+				"externalScriptEditorBin" : "D:/Akelpads/AkelPad.exe",				
+				"execution" : {
+					"nodeexeclimit" : 2000
+					
+				}
 			}
 }

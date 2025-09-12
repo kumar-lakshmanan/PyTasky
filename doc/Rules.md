@@ -25,10 +25,11 @@
 **TAG meanings**
 
 * custom	-	user nodes (no custom tag is custom)
-* sys		-	system nodes. No action will be involved. as its action logic present inside.
-* ui		-	ui based node. these nodes cant be executed in unix headless mode.
+* sys		-	system nodes. No action will be involved. as its action logic present inside. (also node ACTION can't be overridden)
+* ui		-	ui based node. these nodes cant be executed in unix headless mode. (also node ACTION can't be overridden)
+* nooveride -	node ACTION can't be overridden.
 * shareop	-	output will be shared with multiple nodes.
-* multiip	-	input can be from multiple src. wont execute until all inputs are recieved.
+* multiip	-	input can be from multiple src. wont execute until all inputs are received.
 * iponly	-	node wont have output connector. its output wont be stored or cared.
 * oponly	-	node wont have input connector.
 * condition	-	condition check node (along with sys)

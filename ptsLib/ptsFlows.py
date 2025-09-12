@@ -186,8 +186,15 @@ class PTSFlows(object):
 
     def doNodePropsPopulate(self, nodeObj):
         newDict = {}
-        newDict["Node Name"] = nodeObj.NODE_NAME
-        if not self.flowRunner._isTagPresentInTags('sys', nodeObj.NODE_TAGS) and self.flowRunner._isTagPresentInTags('custom', nodeObj.NODE_TAGS) and hasattr(nodeObj.NODE_MODULE, "ACTION"):
+        newDict["Node Name"] = nodeObj.NODE_NAME        
+        #Default script available for nodes which has...
+        r1 = not self.flowRunner._isTagPresentInTags('sys', nodeObj.NODE_TAGS)          #Should not be sys
+        r2 = not self.flowRunner._isTagPresentInTags('ui', nodeObj.NODE_TAGS)           #Should not be ui
+        r3 = self.flowRunner._isTagPresentInTags('custom', nodeObj.NODE_TAGS)           #Should be custom
+        r4 = hasattr(nodeObj.NODE_MODULE, "ACTION")                                     #Should have ACTION
+        r5 = not self.flowRunner._isTagPresentInTags('nooveride', nodeObj.NODE_TAGS)    #Should not have override
+        
+        if  r1 and r2 and r3 and r4 and r5:
             newDict["Node Script"] = "default"
         for eachKey in nodeObj.props.keys():
             newDict[eachKey] = nodeObj.props[eachKey]
@@ -225,18 +232,34 @@ class PTSFlows(object):
         self.parentUi.infoView.setHtml("")
 
     def doFlowNodeDropped(self, event, pos):
-        nodeItem = event.source().selectedItems()[0]
-        nodeName = str(nodeItem.text(0))
-        nodePath = str(nodeItem.data(0, QtCore.Qt.UserRole))
-        x = pos.x()
-        y = pos.y()
-        if nodeName in self.uiNodeCollection:
-            nodeObj = self.uiNodeCollection[nodeName]
-            node = self.ndGraph.create_node(nodeObj.type_, pos=[x, y])
-            self.tls.debug(f"Node added {node.NODE_NAME}")
-            self.doFlowEdited()
+        nodeName = None
+        nodePath = None
+        nodeItem = event.source().selectedItems()[0]        
+        #Item may come from NodeTree or FROM Search Box:
+        if isinstance(nodeItem, QtWidgets.QTableWidgetItem):
+            items = event.source().selectedItems()
+            itemName = items[0].text()
+            itemType = items[1].text()
+            itemPath = items[2].text()
+            if itemType == "Node":
+                nodeName = itemName.replace(".py","").replace(".PY","")
+                nodePath = itemPath
+            else:
+                self.tls.error(f"Item {itemName} is not valid node.")
         else:
-            self.tls.error(f"Node {nodeName} is not valid. Not pre-loaded valid node.")
+            nodeName = str(nodeItem.text(0))
+            nodePath = str(nodeItem.data(0, QtCore.Qt.UserRole))
+        
+        if nodeName and nodePath:
+            x = pos.x()
+            y = pos.y()
+            if nodeName in self.uiNodeCollection:
+                nodeObj = self.uiNodeCollection[nodeName]
+                node = self.ndGraph.create_node(nodeObj.type_, pos=[x, y])
+                self.tls.debug(f"Node added {node.NODE_NAME}")
+                self.doFlowEdited()
+            else:
+                self.tls.error(f"Node {nodeName} is not valid. Not pre-loaded valid node.")
 
     def doNodeExecutionInProgress(self, nodeName):
         if self.lastNodeSelected:

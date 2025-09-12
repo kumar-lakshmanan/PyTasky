@@ -7,21 +7,24 @@ print("This is just a tool lib")
 print("")
 print(__doc__)
 
-import os, sys, importlib
-import kTools; tls = kTools.KTools()
-from syslib import mytools
-importlib.reload(mytools)
+import kTools 
+from kQt import kQtTools
+import kCodeExecuter
+
+tls = kTools.KTools()
+qttls = kQtTools.KQTTools()
+console = kCodeExecuter.KCodeExecuter()
 
 # Simple Print
-print(PTS)
+print(PTS.ui)
 
 def btnClicked():
     print("ok")
 
-parent = mytools.getSharedObj("PTS_UI")
-uiWin = mytools.createUiWindow(parent,"data/ptsUIs/mywin.ui")
+uiWin = qttls.createUiDialog("data/ptsUIs/mywin.ui", PTS.ui)
+            
 print(uiWin)
 
-uiWin.pushButton.clicked.connect(btnClicked)
+#uiWin.pushButton.clicked.connect(btnClicked)
 
-mytools.showUiWindow(uiWin)
+qttls.showUiDialog(uiWin)

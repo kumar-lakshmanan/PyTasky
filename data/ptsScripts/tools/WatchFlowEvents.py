@@ -9,7 +9,7 @@
 
 '''
 __created__ = "05-May-2025"
-__updated__ = "2025-07-07"
+__updated__ = "2025-07-22"
 __author__ = "kayma"
 
 import kTools; tls = kTools.KTools()
@@ -18,7 +18,7 @@ from kQt import kQtTools; qttls = kQtTools.KQTTools()
 advParam = {}
 advParam['isModel'] = False
 
-winObj,uiObj = qttls.createUiDialog("ptsUIs/listWin.ui", None, "Watch Flow Events")
+winObj,uiObj = qttls.createUiDialog("data/ptsUIs/listWin.ui", None, "Watch Flow Events")
 
 qttls.showUiDialog(winObj, advParam)
 

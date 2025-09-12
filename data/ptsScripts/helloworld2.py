@@ -11,7 +11,7 @@ paths.append("G:/pyworkspace/PyTasky/data/ptsNodes")
 tls.addSysPaths(multiPaths=paths)
 
 # Simple Print
-print("Helo Worldx")
+print("Helo World")
 
 # MAKING Use of node modules
 import General.Arithmatic.Add as adder

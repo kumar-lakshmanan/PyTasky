@@ -7,9 +7,10 @@ Created on 21-Mar-2025
 import os, sys, time, json
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.uic import loadUi
-import code
+import code, importlib
 import kTools
 import kCodeExecuter
+from ptsLib import ptsNodeModuleScanner
 
 class PTSFlowRunner(QtCore.QThread):
 
@@ -58,7 +59,7 @@ class PTSFlowRunner(QtCore.QThread):
             ------------
             1. Read flow file
             2. Scan for all nodes in it for some flow specific props and infos
-                2.1 Read node module for some static node infos like style1    /Default, Circle, Box
+                2.1 Read/Reload node module for some static node infos like style1    /Default, Circle, Box
                 2.2 Scan the i/p and o/p connections
                 2.3 Based on it Determine node style2 - starter/executer/finisher/system
             3. Scan the connections
@@ -95,6 +96,11 @@ class PTSFlowRunner(QtCore.QThread):
         flowStrData = self.tls.getFileContent(self.flowFile)
         flowData = json.loads(flowStrData)
         
+        #Reload dynamic modules
+        self.tls.info(f"Scan and Prepare node collections...")
+        pts = ptsNodeModuleScanner.PTSNodeModuleScanner()
+        pts.scanNodeModuleFolder()        
+        
         #Scan Nodes - #!!!!!wont have special io port infos - nodeModule - rebuilt them with tags - will have file info!!!!!
         for each in flowData["nodes"]:
             id = each
@@ -115,23 +121,19 @@ class PTSFlowRunner(QtCore.QThread):
             self.nodes[name]['splprops'] = nodeModule.SPLPROPS if hasattr(nodeModule, 'SPLPROPS') else {}
             _ips = nodeModule.INPUTS if hasattr(nodeModule, 'INPUTS') else []
             _ops = nodeModule.OUTPUTS if hasattr(nodeModule, 'OUTPUTS') else []
-            self.nodes[name]['actualip'] = nodeModule.INPUTS if hasattr(nodeModule, 'INPUTS') else []
-            self.nodes[name]['actualop'] = nodeModule.OUTPUTS if hasattr(nodeModule, 'OUTPUTS') else []
-            if not _ips or _ips == "" or len(_ips): _ips = self._getDefaultInputPorts(nodeModule.TAGS)
-            if not _ops or _ops == "" or len(_ops): _ops = self._getDefaultOutputPorts(nodeModule.TAGS)   
+            if not _ips or _ips == "" or len(_ips)==0: _ips = self._getDefaultInputPorts(nodeModule.TAGS)
+            if not _ops or _ops == "" or len(_ops)==0: _ops = self._getDefaultOutputPorts(nodeModule.TAGS)
             self.nodes[name]['actualip'] = _ips
             self.nodes[name]['actualop'] = _ops                    
             self.nodes[name]['connectedip'] = {}
             self.nodes[name]['connectedop'] = {}
             self.nodes[name]['style1'] = self.getNodeStyle1(self.nodes[name]['splprops'])   #Default, Box, Circle
-            self.nodes[name]['style2'] = self.getNodeStyle2(self.nodes[name]['actualip'], self.nodes[name]['actualop'])
+            self.nodes[name]['style2'] = self.getNodeStyle2(self.nodes[name]['actualip'], self.nodes[name]['actualop']) #STARTER / ENDER / EXECUTER
             
             #Starter nodes should be added to mainnode list
-            if not self._isItSystemNodeForNode(self.nodes[name]) and self._getNodeStyle2(self.nodes[name]) == "STARTER": 
+            if self._getNodeStyle2(self.nodes[name]) == "STARTER" and not self._isItSystemNodeForNode(self.nodes[name]): 
                 self.currentExecutionNodes.append(self.nodes[name])
-            #Loop nodes should be added to rejected node collection
-            #if self._isItSystemNode(self.nodes[name]['tags']) and self._isTagPresentInTags("Loop", self.nodes[name]['tags']): self.rejectedNodes.append(self.nodes[name])
-            #self.tls.debug(f'Fetching node {name} info...')
+                
             self.tls.publishSignal("flowevent", { "lst" : ["scan_node",name] })
                                     
         self.currentExecutionNodes.reverse()
@@ -163,7 +165,7 @@ class PTSFlowRunner(QtCore.QThread):
                 self.nodes[each]['props']['Node Script'] = nd['Node Script'] if 'Node Script' in nd else 'default'
                 self.tls.debug(f'Fetching props info {nd}')
 
-        #self.tls.info('PreSetup Completed!')
+        self.tls.info('PreSetup Completed!')
         self.tls.publishSignal("flowevent", self.tls.publishSignal("flowevent", { "msg" : "PreSetup Completed!" }))
     
     def debugNodeOutput(self, item):
@@ -193,10 +195,10 @@ class PTSFlowRunner(QtCore.QThread):
             
     def run(self):
         '''
-        1. Clean the nodesOutputData = {}
+        1. Clean the nodesOutputData, uiWindows, rest variables
         2. Run till currentExecutionNodes is empty.
             2.1    Pop 1 node from currentExecutionNodes
-            2.2
+            2.2    
         '''
 
         #---------------------------------------------------
@@ -212,6 +214,12 @@ class PTSFlowRunner(QtCore.QThread):
 
         self.cnt = 0
         while len(self.currentExecutionNodes) and not self.terminateFlowExecution:
+            if self.cnt >= self.tls.getSafeConfig(['pts', 'execution','nodeexeclimit'], 2000):
+                msg = f"-----Flow execution terminated as it reached node exec limit-----"
+                self.tls.info(msg)
+                self.flowExecutionStatus.emit(msg)
+                self.tls.publishSignal("flowevent", { "msg" : msg })
+                break;
             self.isFlowRunning = True
             self.cnt = self.cnt + 1
             currentNode = self.currentExecutionNodes.pop()

@@ -12,7 +12,7 @@ body - used if post
 #PTS_NODE
 '''
 __created__ = "2025-04-21" 
-__updated__ = "2025-07-07"
+__updated__ = "2025-07-25"
 __author__ = "kayma"
 
 NAME = "WebCall"
@@ -24,7 +24,7 @@ INPUTS = [ "body" ]
 PROPS = {}
 PROPS["url"] = "-"
 PROPS["method"] = "post"
-PROPS["headers"] = {"Content-Type":"text"}
+PROPS["headers"] = '{"Content-Type":"text"}'
 
 import kTools; tls = kTools.KTools()
 import requests
@@ -36,19 +36,27 @@ def ACTION(input):
     method = PROPS["method"]
     headers = PROPS["headers"]
 
+    print(PROPS)
+    print(headers['Content-Type'])
+    
     if PROPS["method"] == "get":
-        res = requests.get(url, headers)
-        
+        res = requests.get(url, headers=headers)
+        #res.raise_for_status()
 
-    return res
+    return (res.status_code, res.text)
 
 if __name__ == '__main__':
     tls.info("Starting...")
+    
+    headers = {
+        "x-access-token": "goldapi-22parlg03crlj-io",
+        "Content-Type": "application/json"
+    }    
 
     inp = {}
     PROPS["url"] = "https://www.goldapi.io/api/XAU/USD"
     PROPS["method"] = "get"
-    PROPS["headers"] = {"x-access-token" , "goldapi-22parlg03crlj-io"}
+    PROPS["headers"] = headers
 
     ret = ACTION(inp)
 

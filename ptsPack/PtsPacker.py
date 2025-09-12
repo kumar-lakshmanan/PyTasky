@@ -14,9 +14,12 @@ outputPath = f'{distPath}/{AppName}'
 #Will be placed nxt to Sachathya exe
 addOnFiles = []
 addOnFiles.append('G:\\pyworkspace\\PyTasky\\readme.md')
-addOnFiles.append('G:\\pyworkspace\\PyTasky\\config.json')
+addOnFiles.append('G:\\pyworkspace\\PyTasky\\pytasky_config.json')
 addOnFiles.append('G:\\pyworkspace\\PyTasky\\layout.lyt')
 addOnFiles.append('G:\\pyworkspace\\PyTasky\\doc\\image1.png')
+addOnFiles.append('G:\\pyworkspace\\PyTasky\\doc\\image2.png')
+addOnFiles.append('G:\\pyworkspace\\PyTasky\\doc\\image3.png')
+addOnFiles.append('G:\\pyworkspace\\PyTasky\\doc\\image4.png')
 addOnFiles.append('G:\\pyworkspace\\PyTasky\\ptsPack\\build_support\\QtDesigner.zip')
 
 #Contents will be placed nxt to Sachathya exe
@@ -29,15 +32,13 @@ splAddOnFiles.append(('G:\\pyworkspace\\PyTasky\\ptsLib\\ptsUI\\ptsMainWindow.ui
 
 #Special Folder Copy
 splAddOnFolders = []
-splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\ptsNodes', f'{outputPath}\\ptsNodes'))
-splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\ptsFlows', f'{outputPath}\\ptsFlows'))
-splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\ptsScripts', f'{outputPath}\\ptsScripts'))
-
+splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\doc', f'{outputPath}\\doc'))
 splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\ptsLib', f'{outputPath}\\ptsLib'))
 splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\ptsExtLib', f'{outputPath}\\ptsExtLib'))
-
-splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\ptsUIs', f'{outputPath}\\ptsUIs'))
-splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\doc', f'{outputPath}\\doc'))
+splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\data\\ptsNodes', f'{outputPath}\\data\\ptsNodes'))
+splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\data\\ptsFlows', f'{outputPath}\\data\\ptsFlows'))
+splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\data\\ptsScripts', f'{outputPath}\\data\\ptsScripts'))
+splAddOnFolders.append(('G:\\pyworkspace\\PyTasky\\data\\ptsUIs', f'{outputPath}\\data\\ptsUIs'))
 
 #-----------------------------------
 
@@ -46,7 +47,7 @@ import sys,os
 import shutil
 
 import kTools
-ttls = kTools.GetKTools(PackerName)
+ttls = kTools.KTools(PackerName)
 ttls.addSysPaths(SourceCodeHome)
 ttls.addSysPaths(kmxPyLibSourceCodeHome)
 ttls.addSysPaths(PackerHome)
@@ -84,7 +85,7 @@ def doPostProcessing():
         ttls.copyFolderSpl(src,dst)
 
     print(f'\n\nUpdating files...')
-    fileToEdit = f'{outputPath}\\config.json'
+    fileToEdit = f'{outputPath}\\pytasky_config.json'
     content = ttls.getFileContent(fileToEdit)
     if ('"logProdMode" : 0' in content):
         content = content.replace('"logProdMode" : 0', '"logProdMode" : 1')

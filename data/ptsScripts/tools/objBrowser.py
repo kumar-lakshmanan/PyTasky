@@ -15,7 +15,7 @@ class objBrowserCls(QtWidgets.QMainWindow):
 		self.sch = parent
 		QtWidgets.QMainWindow.__init__(self)
 
-		loadUi("ptsUIs/objBrowser.ui", self)
+		loadUi("data/ptsUIs/objBrowser.ui", self)
 		self.setWindowTitle(self.__class__.__name__.replace('Cls',''))
 		self.lineEdit.setText("PTS")
 		self.skipBuiltInsObj = False

@@ -1,7 +1,7 @@
 __appname__ = "PyTasky"
 __author__  = "Kumaresan"
 __created__ = "2025-03-07"
-__updated__ = "2025-07-14"
+__updated__ = "2025-09-12"
 
 '''
 
@@ -25,16 +25,19 @@ from PyQt5.QtGui import (QIcon, QKeySequence, QFont, QColor)
 from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QTextEdit, QWidget,)
 from PyQt5.uic import loadUi
 
-from ptsLib.ptsUi import ptsMainWindow
-from ptsLib import ptsTreeUIHandler
-from ptsLib import ptsConsole
-from ptsLib import ptsFlows
 import atexit
 from kQt import kQtTools
 import kTools
 import kCodeExecuter
 
+from ptsLib.ptsUi import ptsMainWindow
+from ptsLib import ptsScriptEditor
+from ptsLib import ptsSearch
+from ptsLib import ptsTreeUIHandler
+from ptsLib import ptsConsole
+from ptsLib import ptsFlows
 import PyTaskyLookUps
+
 
 #----------------------
 
@@ -80,9 +83,15 @@ class core():
         self.tls.share["PTS_FLOWS"] = self.flows
 
         self.qttls.uiLayoutRestore()
+        self.searchWin = None
         
         self.tls.info("System Ready!")
-
+        
+    def refreshNodes(self):
+        self.doLoadNodeTree()        
+        self.flows.convertGenerateUINodeCollections()
+        self.flows.doClearAndInitalizeFlowChartArea()
+        
     def showUI(self):
         self.ui.show()
 
@@ -156,9 +165,11 @@ class core():
         self.tb03.setObjectName('customTools')
         self.tb03.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
 
-        self.tb03a01 = self.qttls.createAction("Dummy", self.ui, icon="rubber_duck.ico", fn=self.doToolClicked)
-
+        self.tb03a01 = self.qttls.createAction("Search", self.ui, icon="google_custom_search.ico", fn=self.doToolClicked)
+        self.tb03a02 = self.qttls.createAction("Dummy", self.ui, icon="rubber_duck.ico", fn=self.doToolClicked)
+        
         self.tb03.addAction(self.tb03a01)
+        self.tb03.addAction(self.tb03a02)
 
         iconSize = 16   #16 or 32
         self.tb01.setIconSize(self.tb01.iconSize().scaled(iconSize, iconSize, 1))
@@ -284,8 +295,30 @@ class core():
             self.flows.doTerminateExecution()
 
         #Custom
-        if (btnName == "Dummy"):
-            self.tls.debug("Dummy")
+        if (btnName == "Search"):
+            self.doLaunchSearchWindow()
+            
+    def doLaunchSearchWindow(self):
+        # config
+        searchConfig = {
+            "fileTypesToSearch": ["py", "txt", "ui"],
+            "foldersToSearch": {
+                "Flow": self.tls.getSafeConfig(['pts', 'flowsPath']),
+                "Node": self.tls.getSafeConfig(['pts', 'nodesPath']),
+                "Script": self.tls.getSafeConfig(['pts', 'scriptsPath']),
+                "UI": self.tls.getSafeConfig(['pts', 'uisPath'])
+            }
+        }
+        
+        if not self.searchWin: 
+            self.searchWin = ptsSearch.SearchWindow(searchConfig)
+            ico = self.qttls.getIcon('google_custom_search.ico')
+            self.searchWin.setWindowIcon(ico)
+        self.searchWin.show()
+        if self.searchWin.isMinimized():
+            self.searchWin.showNormal()     # restores from minimized/maximized to normal
+            self.searchWin.activateWindow() # bring window to front
+            self.searchWin.raise_()         # make sure it’s on top        
 
     def doSetTitle(self, isEdited=0, flowName=None):
         currentName = self.ui.windowTitle()
@@ -382,7 +415,21 @@ class core():
         pass
 
     def doNodeTreeOptionSelected(self, opt, dummy):
-        self.tls.debug(opt)
+        cmd = opt[0]
+        if cmd == "Edit Node":
+            fileToOpenWith = opt[3][2]
+            if (self.tls.getSafeConfig(['pts','scriptEditor']) == "internal"):
+                self.showInternalScriptEditor(fileToOpenWith)
+        elif cmd == "Edit Script":
+            fileToOpenWith = opt[3][2]
+            if (self.tls.getSafeConfig(['pts','scriptEditor']) == "internal"):
+                self.showInternalScriptEditor(fileToOpenWith)
+            else:
+                binary = self.tls.getSafeConfig(['pts','externalScriptEditorBin'])
+                self.tls.info(f"Opening the file {binary} with {fileToOpenWith}")
+                self.tls.fileLauncherWithBin(binary, fileToOpenWith)
+        else:
+            self.tls.info(opt)
 
     def doScriptTreeOptionSelected(self, opt, dummy):
         cmd = opt[0]
@@ -390,10 +437,13 @@ class core():
             script = opt[3][2]
             self.console.runScript(script)
         elif cmd == "Edit Script":
-            binary = self.tls.getSafeConfig(['pts','scriptEditorBin'])
             fileToOpenWith = opt[3][2]
-            self.tls.info(f"Opening the file {binary} with {fileToOpenWith}")
-            self.tls.fileLauncherWithBin(binary, fileToOpenWith)
+            if (self.tls.getSafeConfig(['pts','scriptEditor']) == "internal"):
+                self.showInternalScriptEditor(fileToOpenWith)
+            else:
+                binary = self.tls.getSafeConfig(['pts','externalScriptEditorBin'])
+                self.tls.info(f"Opening the file {binary} with {fileToOpenWith}")
+                self.tls.fileLauncherWithBin(binary, fileToOpenWith)
         else:
             self.tls.info(opt)
 
@@ -439,6 +489,16 @@ class core():
             vsb.setValue(vsb.maximum())
             hsb = self.ui.qsciPtsStreamOut.horizontalScrollBar()
             hsb.setValue(0)
+            
+    def showInternalScriptEditor(self, scriptFile):
+        self.currentScriptFile = scriptFile
+        self.currentScriptContent = self.tls.getFileContent(self.currentScriptFile)
+        self.currentScriptEditor = ptsScriptEditor.ScriptEditorWindow(self)
+        self.currentScriptEditor.setWindowModality(Qt.ApplicationModal)
+        self.currentScriptEditor.setText(self.currentScriptContent)
+        self.currentScriptEditor.setWindowTitle(f"Editing - {self.currentScriptFile}")
+        self.currentScriptEditor.show()        
+            
 
 if __name__ == "__main__":
     tls = kTools.KTools("PYTASKY", PyTaskyLookUps, "pytasky_config.json")

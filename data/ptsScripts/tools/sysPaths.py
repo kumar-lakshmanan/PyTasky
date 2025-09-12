@@ -18,7 +18,7 @@ class sysPathsCls(QtWidgets.QMainWindow):
 		'''
 		QtWidgets.QMainWindow.__init__(self)		
 
-		loadUi("ptsUIs/listWin.ui", self)
+		loadUi("data/ptsUIs/listWin.ui", self)
 		self.setWindowTitle(self.__class__.__name__.replace('Cls',''))
 
 		for path in sys.path:

@@ -5,7 +5,8 @@ Created on 21-Mar-2025
 '''
 
 import os, sys, time, json
-import code
+import code, importlib
+
 import kTools
 import kCodeExecuter
 
@@ -71,6 +72,7 @@ class PTSExecFlowRunner():
             
             nodeModule = self.console.getModule(nodeModName)
             if not nodeModule: self.tls.errorAndExit(f"Missing module {nodeModName} for Node {name}")
+            importlib.reload(nodeModule)
 
             self.nodes[name] = {}
             self.nodes[name]['id'] = id
@@ -84,8 +86,8 @@ class PTSExecFlowRunner():
             _ops = nodeModule.OUTPUTS if hasattr(nodeModule, 'OUTPUTS') else []
             self.nodes[name]['actualip'] = nodeModule.INPUTS if hasattr(nodeModule, 'INPUTS') else []
             self.nodes[name]['actualop'] = nodeModule.OUTPUTS if hasattr(nodeModule, 'OUTPUTS') else []
-            if not _ips or _ips == "" or len(_ips): _ips = self._getDefaultInputPorts(nodeModule.TAGS)
-            if not _ops or _ops == "" or len(_ops): _ops = self._getDefaultOutputPorts(nodeModule.TAGS)   
+            if not _ips or _ips == "" or len(_ips)==0: _ips = self._getDefaultInputPorts(nodeModule.TAGS)
+            if not _ops or _ops == "" or len(_ops)==0: _ops = self._getDefaultOutputPorts(nodeModule.TAGS)
             self.nodes[name]['actualip'] = _ips
             self.nodes[name]['actualop'] = _ops                    
             self.nodes[name]['connectedip'] = {}
@@ -132,31 +134,6 @@ class PTSExecFlowRunner():
 
         #self.tls.info('PreSetup Completed!')
         self.tls.publishSignal("flowevent", self.tls.publishSignal("flowevent", { "msg" : "PreSetup Completed!" }))
-    
-    def debugNodeOutput(self, item):
-        label = item.text()        
-        data = self.nodesOutputData[label]
-        dataType = str(type(data))
-        self.ui.txtData.setPlainText(f"{data} ( {dataType} )")
-        
-    def debugInfoUpdater(self, executeNodeList, nodeData, currentNode, other, completedNode):
-        #pass
-    
-        if currentNode:
-            self.ui.lblCurrentNode.setText(currentNode['name'])
-    
-        if executeNodeList!=None:
-            self.ui.lstQueue.clear()
-            for each in executeNodeList:
-                self.ui.lstQueue.addItem(each['name'])
-
-        if nodeData:
-            self.ui.lstOutputs.clear()
-            for each in nodeData:
-                self.ui.lstOutputs.addItem(each)   
-        
-        if completedNode:
-            self.ui.lstCompleted.addItem(completedNode['name'])
             
     def run(self):
         '''
@@ -176,6 +153,12 @@ class PTSExecFlowRunner():
 
         self.cnt = 0
         while len(self.currentExecutionNodes):
+            if self.cnt >= self.tls.getSafeConfig(['pts','execution','nodeexeclimit'],2000):
+                msg = f"-----Flow execution terminated as it reached node exec limit-----"
+                self.tls.info(msg)
+                self.flowExecutionStatus.emit(msg)
+                self.tls.publishSignal("flowevent", { "msg" : msg })
+                break;
             self.cnt = self.cnt + 1
             currentNode = self.currentExecutionNodes.pop()
             self.tls.publishSignal("flowevent", { "lst" : ["fetch_node", self.cnt, currentNode['name'] ] })

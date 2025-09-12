@@ -26,7 +26,9 @@ a = Analysis([appScript],
                             'sqlite3',
                             'xmljson',
                             'selenium',
-                            'pytest-playwright'
+                            'pytest-playwright',
+                            'playwright',
+                            'pytest' 
                             ],
              binaries=[],
              datas=[],
