@@ -12,8 +12,9 @@ from code import InteractiveConsole
 import time
 import kTools
 import kCodeExecuter
+from PyQt5 import QtCore
 
-class PTSConsole(object):
+class PTSConsole(QtCore.QObject):
     '''
     Console core will do...
     - Capture all stdouot print redirects and use its fn to write them to custom ui object
@@ -21,11 +22,13 @@ class PTSConsole(object):
       that will start capturing logs to stdout and use above setup to display in our ui.
 
     '''
+    message_signal = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None):
         '''
         Constructor
         '''
+        super().__init__()
         #Support Modules ready
         self.tls = kTools.KTools()
         self.PTS = parent
@@ -42,24 +45,28 @@ class PTSConsole(object):
         self.tls.info('Initializing custom python interpreter...')
         self.console = self.PTS.console
         self.console.updateLocals('PTS',self.PTS)
+        
+        self.message_signal.connect(self.PTS.logTextDisplayUpdate)
 
     def grabStdOut(self):
-        self.tls.debug('Redirecting StdOut/Err to Console...')
+        #self.tls.debug('Redirecting StdOut/Err to Console...')
         sys.stdout = self
         sys.stderr = self
 
     def reset(self):
         sys.stdout = self.originalStdOut
         sys.stderr = self.originalStdErr
-        self.tls.debug('StdOut/Err Reverted back to original.')
+        #self.tls.debug('StdOut/Err Reverted back to original.')
 
     def customLogPrinter(self, msg):
         #This fn is connected to custom log printer.
-        print(msg)
+        self.write(msg)
 
     def write(self, data):
         #To Capture the StdOut/Err Redirects
-        self.PTS.logTextDisplayUpdate(data)
+        #self.PTS.logTextDisplayUpdate(data)
+        if data.strip():
+            self.message_signal.emit(str(data) + "\n")        
 
     def flush(self):
         pass  # While Stdout Redirect happens, Required for file-like compatibility

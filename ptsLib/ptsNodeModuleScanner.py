@@ -82,11 +82,12 @@ class PTSNodeModuleScanner(object):
         advConfig['silentIgnoredFileInfo'] = 1
         nodeModFiles = self.console.scanModuleFiles(self.ptsNodesPath, ignoreFileNameHasText=['__init__'], advConfig=advConfig)
         for nodeModName in nodeModFiles.keys():
+            self.tls.debug(f"Processing... {nodeModName}")
             _module =  nodeModFiles[nodeModName][0]
             _modName = _module.__name__
             _name = _module.NAME
             _desc = _module.__doc__
-            _tags = _module.TAGS if hasattr(_module, 'TAGS') else ['custom']
+            _tags = _module.TAGS if hasattr(_module, 'TAGS') else ['custom']            
             if _tags == []: _tags.append('custom')
             _props = _module.PROPS if hasattr(_module, 'PROPS') else {}
             _splProps = _module.SPLPROPS if hasattr(_module, 'SPLPROPS') else {}            

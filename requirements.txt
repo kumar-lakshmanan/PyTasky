@@ -3,3 +3,6 @@ requests
 wexpect
 blinker
 pytest-playwright
+selenium
+jsonpath-ng
+pyyaml

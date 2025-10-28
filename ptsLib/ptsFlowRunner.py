@@ -81,10 +81,13 @@ class PTSFlowRunner(QtCore.QThread):
         '''
         self.tls.publishSignal("flowevent",  { "msg" : f"Scanning flow {self.flowFile}" })
 
+        self.flowProps = {}
+        self.commonData = {}
         self.nodes = {}
         self.currentExecutionNodes = []
         self.rejectedNodes = []
         self.nodesOutputData = {}
+        
 
         #DEBUG RESET
         self.ui.lstCompleted.clear()
@@ -156,14 +159,25 @@ class PTSFlowRunner(QtCore.QThread):
                 self.nodes[toNodeName]['connectedip'][toPortName].append((fromNodeName, fromPortName))
                 self.tls.debug(f'Fetching connection info {fromNodeName}.{fromPortName} -> {toNodeName}.{toPortName}')
 
-        #Scan Props
+        #Scan Node Props
         if "nodeProps" in flowData:
             for each in flowData["nodeProps"]:
                 nd = flowData["nodeProps"][each]
                 tmp_ = nd.pop("Node Name") if "Node Name" in nd else ''
                 self.nodes[each]['props'] = nd
                 self.nodes[each]['props']['Node Script'] = nd['Node Script'] if 'Node Script' in nd else 'default'
-                self.tls.debug(f'Fetching props info {nd}')
+                self.tls.debug(f'Fetching node props info {nd}')
+
+        #Scan Flow Props
+        if "flowProps" in flowData:
+            for each in flowData["flowProps"]:
+                flowInData = self.tls.getSafeDictValue(flowData["flowProps"],"in",{})
+                flowOutData = self.tls.getSafeDictValue(flowData["flowProps"],"out",{})
+                flowPropData = self.tls.getSafeDictValue(flowData["flowProps"],"props",{})
+                self.flowProps['in'] =flowInData
+                self.flowProps['out'] = flowOutData
+                self.flowProps['props'] =  flowPropData
+                self.tls.debug(f'Fetching flow props info {nd}')
 
         self.tls.info('PreSetup Completed!')
         self.tls.publishSignal("flowevent", self.tls.publishSignal("flowevent", { "msg" : "PreSetup Completed!" }))
@@ -206,6 +220,7 @@ class PTSFlowRunner(QtCore.QThread):
         self.flowExecutionStatus.emit(f'Executing the flow...')
         self.tls.publishSignal("flowevent", { "msg": "Executing the flow..." })
 
+        self.commonData = {}
         self.nodesOutputData = {}
         self.terminateFlowExecution = False
         self.isFlowRunning = False
@@ -453,11 +468,15 @@ class PTSFlowRunner(QtCore.QThread):
 
     def executeNode(self, node, request):
         modToExecute = None
+        request = self.tls.getSafeDictValue(request, 'inp', request)
         if 'Node Script' in node['props'] and node['props']['Node Script'] != 'default':
             nodescript = node['props']['Node Script']
             customModule = self.console.getModule(nodescript)
             customModule.NAME = node['name']
-            customModule.PROPS = node['props']
+            customModule.PROPS = node['props']  
+            customModule.COMMON = self.commonData                      
+            customModule.FLOWPROPS = self.flowProps
+            customModule.FLOWDATA = self.nodesOutputData
             customModule.PTS = self.PTS if hasattr(self, 'PTS') else None
             if hasattr(customModule, 'ACTION'):
                 self.tls.info(f"Custom module found: {customModule}")
@@ -470,7 +489,10 @@ class PTSFlowRunner(QtCore.QThread):
         else:
             defaultMod = node['module']
             defaultMod.NAME = node['name']
-            defaultMod.PROPS = node['props']
+            defaultMod.PROPS = node['props']            
+            defaultMod.COMMON = self.commonData                      
+            defaultMod.FLOWPROPS = self.flowProps
+            defaultMod.FLOWDATA = self.nodesOutputData
             defaultMod.PTS = self.PTS if hasattr(self, 'PTS') else None
             modToExecute = defaultMod
         #--------------------------------------------------
@@ -484,7 +506,7 @@ class PTSFlowRunner(QtCore.QThread):
             #Updating console so that users can use this variables to see the values
             self.flowExecutionStatus.emit(f">>>>>> {self.cnt}.Executing core action of {node['name']}")
             self.tls.publishSignal("flowevent", { "lst" : ["executing", self.cnt, node['name']] })            
-            self.updateExecutionLocalsWithNeededInput(request)
+            self.updateExecutionLocalsWithNeededInput(request, modToExecute)
             if self._isTagPresentInTags('ui', node['tags']):
                 def resultReadyFn(result):
                     nonlocal response
@@ -505,16 +527,21 @@ class PTSFlowRunner(QtCore.QThread):
 
         return response
 
-    def updateExecutionLocalsWithNeededInput(self, inputForNode):
+    def updateExecutionLocalsWithNeededInput(self, inputForNode, modToExecute):
         '''
         Users can provide quick inputport name as variable and get the value. in executions
         '''
         #Updating all output data:
-        self.console.updateLocals('data', self.nodesOutputData)
-
-        #Each inp with its values.
-        for eachKey in inputForNode:
-            self.console.updateLocals(eachKey, inputForNode[eachKey])
+        self.console.updateLocals('INPUT', inputForNode)
+        self.console.updateLocals('PROPS', modToExecute.PROPS)
+        self.console.updateLocals('COMMON', modToExecute.COMMON)
+        self.console.updateLocals('FLOWPROPS', modToExecute.FLOWPROPS)
+        self.console.updateLocals('FLOWDATA', self.nodesOutputData)
+        self.console.updateLocals('PTS', modToExecute.PTS)    
+        
+        # #Each inp with its values.
+        # for eachKey in inputForNode:
+        #     self.console.updateLocals(eachKey, inputForNode[eachKey])
 
     def getNextNodes(self, node):
         nextNodes = []

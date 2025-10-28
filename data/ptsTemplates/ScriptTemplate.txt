@@ -1,0 +1,20 @@
+'''
+@name: [NAME]
+@author:  [YOURNAME]
+@createdon: [TODAY]
+@description:
+
+[DESC] 
+
+'''
+__created__ = "[TODAY]" 
+__updated__ = "[TODAY]"
+__author__ = "[YOURNAME]"
+
+import kTools; tls = kTools.KTools()
+
+def fnDo[NAME]():
+	tls.info("Calling my [NAME]")
+	
+if __name__ == "__main__":
+	fnDo[NAME]()

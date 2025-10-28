@@ -21,6 +21,7 @@ addOnFiles.append('G:\\pyworkspace\\PyTasky\\doc\\image2.png')
 addOnFiles.append('G:\\pyworkspace\\PyTasky\\doc\\image3.png')
 addOnFiles.append('G:\\pyworkspace\\PyTasky\\doc\\image4.png')
 addOnFiles.append('G:\\pyworkspace\\PyTasky\\ptsPack\\build_support\\QtDesigner.zip')
+addOnFiles.append(r'G:/pyworkspace/PyTasky/editortheme.json')
 
 #Contents will be placed nxt to Sachathya exe
 addOnFolders = []
@@ -48,9 +49,7 @@ import shutil
 
 import kTools
 ttls = kTools.KTools(PackerName)
-ttls.addSysPaths(SourceCodeHome)
-ttls.addSysPaths(kmxPyLibSourceCodeHome)
-ttls.addSysPaths(PackerHome)
+ttls.sysPathUpdater([SourceCodeHome, kmxPyLibSourceCodeHome, PackerHome])
 
 def doPreProcessing():
     print(f'\n\nClean any existing files... {distPath}')

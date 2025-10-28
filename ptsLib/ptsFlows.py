@@ -509,6 +509,10 @@ class PTSFlows(object):
             name = eachNode.NODE_NAME
             props = eachNode.props
             sessionInfo['nodeProps'][name] = props
+            
+        if hasattr(self.ndGraph, "flowProps"):
+            sessionInfo['flowProps'] = self.ndGraph.flowProps
+                            
         file_path = file_path.strip()
 
         def default(obj):
@@ -570,6 +574,20 @@ class PTSFlows(object):
         for eachNode in self.ndGraph.all_nodes():
             eachNode.props = fileContent['nodeProps'][eachNode.NODE_NAME]
             eachNode.props['Node Name'] = str(eachNode.NODE_NAME)
+
+        self.ndGraph.flowProps = {}
+        if "flowProps" in fileContent:
+            flowInData = self.tls.getSafeDictValue(fileContent["flowProps"],"in",{})
+            flowOutData = self.tls.getSafeDictValue(fileContent["flowProps"],"out",{})
+            flowPropData = self.tls.getSafeDictValue(fileContent["flowProps"],"props",{})
+        else:
+            flowInData = {}
+            flowOutData = {}
+            flowPropData = {}            
+        self.ndGraph.flowProps['in'] = flowInData
+        self.ndGraph.flowProps['out'] = flowOutData
+        self.ndGraph.flowProps['props'] =  flowPropData
+            
         self.ndGraph.session_changed.emit(file_path)
         self.flowRunner.flowFile = file_path
         self.centerViewFlow()        

@@ -1,0 +1,29 @@
+'''
+@name: [NAME]
+@author:  [YOURNAME]
+@createdon: [TODAY]
+@description:
+
+[DESC] 
+ 
+#PTS_NODE
+'''
+__created__ = "[TODAY]" 
+__updated__ = "[TODAY]"
+__author__ = "[YOURNAME]"
+
+NAME = "[NAME]"
+
+TAGS = ["custom"]
+
+INPUTS = [ "in1", "in2" ]
+
+PROPS = {}
+
+import kTools; tls = kTools.KTools()
+
+def ACTION(input):
+    in1 = input["in1"]
+    in2 = input["in2"]
+    output = in1 + in2                
+    return output

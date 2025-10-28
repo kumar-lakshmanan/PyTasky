@@ -26,10 +26,12 @@
 				"nodesPath" : "G:/pyworkspace/PyTasky/data/ptsNodes",
 				"scriptsPath" : "G:/pyworkspace/PyTasky/data/ptsScripts",
 				"uisPath" : "G:/pyworkspace/PyTasky/data/ptsUIs",
+				"templatesPath" : "G:/pyworkspace/PyTasky/data/ptsTemplates",
 				"div":"---------------------------------",
 				"qtDesignerBin" : "G:/pyworkspace/PyTasky/QtDesigner/designer.exe",
 				"scriptEditor" : "internal",
-				"externalScriptEditorBin" : "D:/Akelpads/AkelPad.exe",				
+				"externalScriptEditorBin" : "D:/Akelpads/AkelPad.exe",
+				"externalTextEditorBin" : "D:/Akelpads/AkelPad.exe",					
 				"execution" : {
 					"nodeexeclimit" : 2000
 					

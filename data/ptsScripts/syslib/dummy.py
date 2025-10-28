@@ -30,8 +30,6 @@ tls = kTools.KTools()
 import kCodeExecuter
 console = kCodeExecuter.KCodeExecuter()
 
-
-
 def getTls():
     return tls
 

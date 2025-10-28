@@ -26,5 +26,5 @@ PROPS = {}
 import kTools; tls = kTools.KTools()
 
 def ACTION(input):    
-    return (input['in1'][tls.lookUp.inputPortName], input['in2'][tls.lookUp.inputPortName])
+    return (input['in1'], input['in2'])
 

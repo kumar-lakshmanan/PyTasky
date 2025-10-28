@@ -9,7 +9,7 @@
 * selenium
   
   
-### InProgress ###
+# InProgress #
 * ~~UI - Node listing based on file~~
 * ~~Drag and Drop Node~~
 * ~~Flow save / load ~~
@@ -24,8 +24,8 @@
 ~~	* highlight slo execute~~
 * clean/structurize node modules
 * ~~dynmaic modules~~
-* error handling
-* Compile to desktop app
+* _error handling_
+* __Compile to desktop app__
 
 
 ### planned todos (ideas) ###

@@ -1,7 +1,7 @@
 __appname__ = "PyTasky"
 __author__  = "Kumaresan"
 __created__ = "2025-03-07"
-__updated__ = "2025-09-12"
+__updated__ = "2025-10-27"
 
 '''
 
@@ -23,19 +23,27 @@ from PyQt5.Qt import QLineEdit
 from PyQt5.QtCore import (QFile, QFileInfo, QPoint, QSettings, QSignalMapper, QSize, QTextStream, Qt,)
 from PyQt5.QtGui import (QIcon, QKeySequence, QFont, QColor)
 from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QTextEdit, QWidget,)
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from schedule import Scheduler
 from PyQt5.uic import loadUi
-
+import threading
+import time
+import schedule
+import queue
 import atexit
+
 from kQt import kQtTools
 import kTools
 import kCodeExecuter
-
+    
 from ptsLib.ptsUi import ptsMainWindow
 from ptsLib import ptsScriptEditor
+from ptsLib import ptsScheduler
 from ptsLib import ptsSearch
 from ptsLib import ptsTreeUIHandler
 from ptsLib import ptsConsole
 from ptsLib import ptsFlows
+from ptsLib import ptsEventQueueActionManager
 import PyTaskyLookUps
 
 
@@ -85,12 +93,114 @@ class core():
         self.qttls.uiLayoutRestore()
         self.searchWin = None
         
-        self.tls.info("System Ready!")
+        #Tray       
+        self.qapp.setQuitOnLastWindowClosed(False)        
+        self.tray = QtWidgets.QSystemTrayIcon(self.ui)
+        self.tray.setIcon(self.qttls.getIcon("user_ninja.ico"))
+        self.tray.setVisible(True)      
+        self.tray.activated.connect(self.doTrayClicked)
         
+        #Tray Menu
+        exit_action = self.qttls.createAction("Exit PyTasky", self.ui, icon="cross.ico", fn=self.qapp.quit)
+        self.traymenu = QtWidgets.QMenu()
+        self.traymenu.addAction(exit_action)
+        self.tray.setContextMenu(self.traymenu) 
+        
+        #UI Scheduler
+        self.doSchedulerSetup()
+        
+        #EventQueueManger
+        self.MainQueue = queue.Queue()
+        self.queueListener = ptsEventQueueActionManager.PTSEventQueueManager(self)
+        self.queueListener.ACTION_REQUESTED.connect(self.onQueueActionRequested)
+        self.queueListener.ACTION_REQUESTED2.connect(self.onQueueActionRequested)
+        self.queueListener.start()
+        
+        self.actionProcessor = ptsEventQueueActionManager.PTSEventActionManager(self)
+
+        self.tls.info("System Ready!")
+      
+    def onQueueActionRequested(self, action, param):
+        # Via main queue user requested some action, lets perform the action.
+        self.actionProcessor.doAction(action, param)
+
+    # def make_threaded(self, func, prevent_overlap=False):
+    #     """
+    #     Wraps `func` to run in a background thread.
+    #     If prevent_overlap=True, ensures the same job doesn't overlap.
+    #     """
+    #     if not prevent_overlap:
+    #         def wrapper(*args, **kwargs):
+    #             threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
+    #         return wrapper
+    #     else:
+    #         lock = threading.Lock()
+    #         def wrapper(*args, **kwargs):
+    #             if lock.locked():
+    #                 return  # skip if still running
+    #             def run():
+    #                 with lock:
+    #                     func(*args, **kwargs)
+    #             threading.Thread(target=run, daemon=True).start()
+    #         return wrapper        
+                
+    def doSchedulerSetup(self):
+        self.sch = schedule
+        original_do = self.sch.Job.do
+        
+        def make_threaded(func, prevent_overlap=False):
+            """
+            Wraps `func` to run in a background thread.
+            If prevent_overlap=True, ensures the same job doesn't overlap.
+            """
+            if not prevent_overlap:
+                def wrapper(*args, **kwargs):
+                    threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
+                return wrapper
+            else:
+                lock = threading.Lock()
+                def wrapper(*args, **kwargs):
+                    if lock.locked():
+                        return  # skip if still running
+                    def run():
+                        with lock:
+                            func(*args, **kwargs)
+                    threading.Thread(target=run, daemon=True).start()
+                return wrapper           
+    
+        def threaded_do(job, job_func, *args, **kwargs):
+            # Wrap the job function
+            wrapped = make_threaded(job_func, prevent_overlap=False)
+            return original_do(job, wrapped, *args, **kwargs)
+    
+        self.sch.Job.do = threaded_do        
+        self.schExecuter = QtCore.QTimer()
+        self.schExecuter.timeout.connect(self.sch.run_pending)
+        self.schExecuter.start(1000)  # every 1 sec        
+        self.tls.info("Scheduler Ready!")
+            
+    def doTrayClicked(self, reason):
+        if reason == QtWidgets.QSystemTrayIcon.Trigger: # Single click (left click)
+            if self.ui.isVisible():
+                self.ui.hide()
+            else:
+                self.ui.show()
+        elif reason == QtWidgets.QSystemTrayIcon.DoubleClick: # Double click
+            self.ui.show() # Always show on double click
+    
     def refreshNodes(self):
         self.doLoadNodeTree()        
         self.flows.convertGenerateUINodeCollections()
         self.flows.doClearAndInitalizeFlowChartArea()
+        
+    def doExecuteFlow(self, flowFile):
+        if flowFile and os.path.exists(flowFile):                        
+            self.flows.coreLoadFlow(flowFile)
+            self.flows.doRunFlow()
+
+    def doExecuteScript(self, scriptFile):
+        if scriptFile and os.path.exists(scriptFile):                        
+            self.console.runScript(scriptFile)
         
     def showUI(self):
         self.ui.show()
@@ -340,10 +450,10 @@ class core():
         config['allowedFiles'] = ['.ui','.UI', '.uI','.Ui']
         config['fileContentShouldHave'] = '<ui version="4.0">'
         config['targetTreeObject'] = self.ui.treePtsUIs
-        config['contextMenuOpenSpace'] = ['Create new UI file...','','Refresh']
-        config['contextMenuFileItems'] = ['Edit UI file...','Copy UI file path', '' ,'Delete']
-        config['contextMenuDirItems'] = ['Create new UI file...','','Refresh']
-        config['menuSelectedFn'] = None
+        config['contextMenuOpenSpace'] = []
+        config['contextMenuFileItems'] = ['Edit UI...', 'Edit in text editor', '' ,'Open this folder']
+        config['contextMenuDirItems'] = ['Create new UI...','','Open this folder']
+        config['menuSelectedFn'] = self.doUITreeOptionSelected
         config['dblClickFn'] = self.doUITreeDblClicked
         self.treeUI = ptsTreeUIHandler.TreeUIHandler(self, config)
         self.treeUI.loadTree()
@@ -356,10 +466,10 @@ class core():
         config['allowedFiles'] = ['.flow','.FLOW']
         config['fileContentShouldHave'] = "pipe_collision"
         config['targetTreeObject'] = self.ui.treePtsFlows
-        config['contextMenuOpenSpace'] = ['Create Folder...','Open Scripts Folder','','Refresh']
-        config['contextMenuFileItems'] = ['Execute','','Edit Script','','Delete']
-        config['contextMenuDirItems'] = ['Create New Script...','','Create Folder...']
-        config['menuSelectedFn'] = None
+        config['contextMenuOpenSpace'] = []
+        config['contextMenuFileItems'] = ['Load flow...','Edit in text editor','','Open this folder']
+        config['contextMenuDirItems'] = ['Open this folder']
+        config['menuSelectedFn'] = self.doFlowTreeOptionSelected
         config['dblClickFn'] = self.doFlowsTreeDblClicked
         self.treeFlow = ptsTreeUIHandler.TreeUIHandler(self, config)
         self.treeFlow.loadTree()
@@ -372,9 +482,9 @@ class core():
         config['allowedFiles'] = ['.py']
         config['fileContentShouldHave'] = ":"
         config['targetTreeObject'] = self.ui.treePtsScripts
-        config['contextMenuOpenSpace'] = ['Create Folder...','Open Scripts Folder','','Refresh']
-        config['contextMenuFileItems'] = ['Execute','','Edit Script','','Delete']
-        config['contextMenuDirItems'] = ['Create New Script...','','Create Folder...']
+        config['contextMenuOpenSpace'] = []
+        config['contextMenuFileItems'] = ['Execute','Execute in Thread','Edit script...','Edit in text editor','','Open this folder']
+        config['contextMenuDirItems'] = ['Create new script...','','Open this folder']
         config['menuSelectedFn'] = self.doScriptTreeOptionSelected
         config['dblClickFn'] = self.doScriptTreeDblClicked
         self.treeScript = ptsTreeUIHandler.TreeUIHandler(self, config)
@@ -388,9 +498,9 @@ class core():
         config['allowedFiles'] = ['.py']
         config['fileContentShouldHave'] = "#PTS_NODE"
         config['targetTreeObject'] = self.ui.treePtsNodes
-        config['contextMenuOpenSpace'] = ['Create Folder...','Open Nodes Folder','','Refresh']
-        config['contextMenuFileItems'] = ['Edit Node','','Delete']
-        config['contextMenuDirItems'] = ['Create New Node...','','Create Folder...']
+        config['contextMenuOpenSpace'] = ['Refresh']
+        config['contextMenuFileItems'] = ['Edit node...','Edit in text editor','','Open this folder']
+        config['contextMenuDirItems'] = ['Create new node...','','Open this folder']
         config['menuSelectedFn'] = self.doNodeTreeOptionSelected
         config['dblClickFn'] = self.doNodeTreeDblClicked
         self.treeNode = ptsTreeUIHandler.TreeUIHandler(self, config)
@@ -409,34 +519,140 @@ class core():
     def doScriptTreeDblClicked(self, label, fileFolder, typ, item):
         if typ == "file":
             self.console.runScript(fileFolder)
+            #self.console.runScriptThreaded(fileFolder)
 
     def doNodeTreeDblClicked(self, label, fileFolder, typ, item):
         #self.tls.debug(f"{label}, {fileFolder}, {typ}, {item}")
         pass
 
-    def doNodeTreeOptionSelected(self, opt, dummy):
+    def getTemplateFileContent(self, templateFile, name, desc, username="unknown" ):
+        templatePath = self.tls.getSafeConfig(['pts','templatesPath'])
+        srcFile = self.tls.pathJoin(templatePath, templateFile)
+        if self.tls.isFileExists(srcFile):
+            content = self.tls.getFileContent(srcFile)
+            content = content.replace("[NAME]", name)
+            content = content.replace("[DESC]", desc)
+            content = content.replace("[YOURNAME]", username)
+            content = content.replace("[TODAY]", tls.getDateTimeStamp("%Y-%m-%d"))
+            return content
+        else:
+            self.tls.error(f"Template file not found {srcFile}")
+        return None
+
+    def doUITreeOptionSelected(self, opt, dummy):             
         cmd = opt[0]
-        if cmd == "Edit Node":
+        if cmd == "Edit UI...":
             fileToOpenWith = opt[3][2]
-            if (self.tls.getSafeConfig(['pts','scriptEditor']) == "internal"):
-                self.showInternalScriptEditor(fileToOpenWith)
-        elif cmd == "Edit Script":
+            bin = self.tls.getSafeConfig(['pts','qtDesignerBin'])
+            self.tls.info(f"Opening the file {fileToOpenWith} with {bin}")
+            self.tls.fileLauncherWithBin(bin, fileToOpenWith)
+                                
+        elif cmd == "Edit in text editor":
+            fileToOpenWith = opt[3][2]
+            binary = self.tls.getSafeConfig(['pts','externalTextEditorBin'])
+            self.tls.info(f"Opening the file {fileToOpenWith} with {binary}")
+            self.tls.fileLauncherWithBin(binary, fileToOpenWith)
+            
+        elif cmd == "Open this folder":
+            fileToOpenWith = opt[3][2]
+            if self.tls.isFileExists(fileToOpenWith) and os.path.isfile(fileToOpenWith):
+                fileToOpenWith = os.path.dirname(fileToOpenWith)        
+            self.tls.info(f"Opening location {fileToOpenWith}")
+            self.tls.fileLauncherWithBin("explorer", fileToOpenWith)
+
+        elif cmd == "Create new UI...":
+            fileToOpenWith = opt[3][2]
+            if self.tls.isFileExists(fileToOpenWith) and os.path.isfile(fileToOpenWith):
+                fileToOpenWith = os.path.dirname(fileToOpenWith) 
+            newFileName = self.qttls.showInputBox("New UI", "Create new UI with name:", "new_ui.ui")
+            if newFileName:
+                newFileNameAlone = newFileName.replace('.ui','').replace('.UI','')
+                newFile = self.tls.pathJoin(fileToOpenWith, newFileName)            
+                if newFile and not self.tls.isFileExists(newFile):
+                    newNodeContent = self.getTemplateFileContent("UITemplate.txt", newFileNameAlone, newFileNameAlone + "DESC", "unknown" )
+                    self.tls.writeFileContent(newFile, newNodeContent)  
+                    self.treeUI.loadTree()     
+                    bin = self.tls.getSafeConfig(['pts','qtDesignerBin'])
+                    self.tls.info(f"Opening the file {newFile} with {bin}")
+                    self.tls.fileLauncherWithBin(bin, newFile)
+
+    def doNodeTreeOptionSelected(self, opt, dummy):       
+        cmd = opt[0]
+        if cmd == "Edit node...":
             fileToOpenWith = opt[3][2]
             if (self.tls.getSafeConfig(['pts','scriptEditor']) == "internal"):
                 self.showInternalScriptEditor(fileToOpenWith)
             else:
                 binary = self.tls.getSafeConfig(['pts','externalScriptEditorBin'])
-                self.tls.info(f"Opening the file {binary} with {fileToOpenWith}")
+                self.tls.info(f"Opening the file {fileToOpenWith} with {binary}")
                 self.tls.fileLauncherWithBin(binary, fileToOpenWith)
-        else:
-            self.tls.info(opt)
+                                
+        elif cmd == "Edit in text editor":
+            fileToOpenWith = opt[3][2]
+            binary = self.tls.getSafeConfig(['pts','externalTextEditorBin'])
+            self.tls.info(f"Opening the file {fileToOpenWith} with {binary}")
+            self.tls.fileLauncherWithBin(binary, fileToOpenWith)
+            
+        elif cmd == "Open this folder":
+            fileToOpenWith = opt[3][2]
+            if self.tls.isFileExists(fileToOpenWith) and os.path.isfile(fileToOpenWith):
+                fileToOpenWith = os.path.dirname(fileToOpenWith)        
+            self.tls.info(f"Opening location {fileToOpenWith}")
+            self.tls.fileLauncherWithBin("explorer", fileToOpenWith)
 
-    def doScriptTreeOptionSelected(self, opt, dummy):
+        elif cmd == "Create new node...":
+            fileToOpenWith = opt[3][2]
+            if self.tls.isFileExists(fileToOpenWith) and os.path.isfile(fileToOpenWith):
+                fileToOpenWith = os.path.dirname(fileToOpenWith) 
+            newFileName = self.qttls.showInputBox("New node", "Create new node with name:", "new_node.py")
+            if newFileName:
+                if not newFileName.endswith(".py") or not newFileName.endswith(".PY"): newFileName =newFileName + '.py'
+                newFileNameAlone = newFileName.replace('.py','').replace('.PY','')
+                newFile = self.tls.pathJoin(fileToOpenWith, newFileName)            
+                if newFile and not self.tls.isFileExists(newFile):
+                    newNodeContent = self.getTemplateFileContent("NodeTemplate.txt", newFileNameAlone, newFileNameAlone + " DESC", "unknown" )
+                    self.tls.writeFileContent(newFile, newNodeContent)  
+                    self.treeNode.loadTree()     
+                    if (self.tls.getSafeConfig(['pts','scriptEditor']) == "internal"):
+                        self.showInternalScriptEditor(newFile)
+                    else:
+                        binary = self.tls.getSafeConfig(['pts','externalScriptEditorBin'])
+                        self.tls.info(f"Opening the file {binary} with {fileToOpenWith}")
+                        self.tls.fileLauncherWithBin(binary, newFile)     
+        
+        elif cmd == "Refresh":
+            self.refreshNodes()               
+    
+    def doFlowTreeOptionSelected(self, opt, dummy):
+        cmd = opt[0]
+        if cmd == "Load flow...":
+            fileToOpenWith = opt[3][2]
+            self.flows.coreLoadFlow(fileToOpenWith)
+                                
+        elif cmd == "Edit in text editor":
+            fileToOpenWith = opt[3][2]
+            binary = self.tls.getSafeConfig(['pts','externalTextEditorBin'])
+            self.tls.info(f"Opening the file {fileToOpenWith} with {binary}")
+            self.tls.fileLauncherWithBin(binary, fileToOpenWith)
+            
+        elif cmd == "Open this folder":
+            fileToOpenWith = opt[3][2]
+            if self.tls.isFileExists(fileToOpenWith) and os.path.isfile(fileToOpenWith):
+                fileToOpenWith = os.path.dirname(fileToOpenWith)        
+            self.tls.info(f"Opening location {fileToOpenWith}")
+            self.tls.fileLauncherWithBin("explorer", fileToOpenWith)
+                            
+    def doScriptTreeOptionSelected(self, opt, dummy):       
         cmd = opt[0]
         if cmd == "Execute":
             script = opt[3][2]
             self.console.runScript(script)
-        elif cmd == "Edit Script":
+            
+        if cmd == "Execute in Thread":            
+            script = opt[3][2]
+            self.console.runScriptThreaded(script)            
+            
+        elif cmd == "Edit script...":
             fileToOpenWith = opt[3][2]
             if (self.tls.getSafeConfig(['pts','scriptEditor']) == "internal"):
                 self.showInternalScriptEditor(fileToOpenWith)
@@ -444,8 +660,39 @@ class core():
                 binary = self.tls.getSafeConfig(['pts','externalScriptEditorBin'])
                 self.tls.info(f"Opening the file {binary} with {fileToOpenWith}")
                 self.tls.fileLauncherWithBin(binary, fileToOpenWith)
-        else:
-            self.tls.info(opt)
+
+        elif cmd == "Edit in text editor":
+            fileToOpenWith = opt[3][2]
+            binary = self.tls.getSafeConfig(['pts','externalTextEditorBin'])
+            self.tls.info(f"Opening the file {fileToOpenWith} with {binary}")
+            self.tls.fileLauncherWithBin(binary, fileToOpenWith)
+            
+        elif cmd == "Open this folder":
+            fileToOpenWith = opt[3][2]
+            if self.tls.isFileExists(fileToOpenWith) and os.path.isfile(fileToOpenWith):
+                fileToOpenWith = os.path.dirname(fileToOpenWith)        
+            self.tls.info(f"Opening location {fileToOpenWith}")
+            self.tls.fileLauncherWithBin("explorer", fileToOpenWith)
+
+        elif cmd == "Create new script...":
+            fileToOpenWith = opt[3][2]
+            if self.tls.isFileExists(fileToOpenWith) and os.path.isfile(fileToOpenWith):
+                fileToOpenWith = os.path.dirname(fileToOpenWith) 
+            newFileName = self.qttls.showInputBox("New script", "Create new script with name:", "new_script.py")                             
+            if newFileName:
+                if not newFileName.endswith(".py") or not newFileName.endswith(".PY"): newFileName = newFileName + '.py'                
+                newFileNameAlone = newFileName.replace('.py','').replace('.PY','')
+                newFile = self.tls.pathJoin(fileToOpenWith, newFileName)            
+                if newFile and not self.tls.isFileExists(newFile):
+                    newScriptContent = self.getTemplateFileContent("ScriptTemplate.txt", newFileNameAlone, newFileNameAlone + " DESC", "unknown" )
+                    self.tls.writeFileContent(newFile, newScriptContent)   
+                    self.treeScript.loadTree()   
+                    if (self.tls.getSafeConfig(['pts','scriptEditor']) == "internal"):
+                        self.showInternalScriptEditor(newFile)
+                    else:
+                        binary = self.tls.getSafeConfig(['pts','externalScriptEditorBin'])
+                        self.tls.info(f"Opening the file {binary} with {fileToOpenWith}")
+                        self.tls.fileLauncherWithBin(binary, newFile)                  
 
     def doExecuteCommandLine(self):
         val = str(self.ui.lineEdit.text()).strip()
@@ -463,15 +710,30 @@ class core():
         return self
 
     def __exit__(self, *arg):
-        self.tls.info('PyTasky exit actions initiated...')
         #self.schDoInstanceLastAction()
         #log.warning('Thank you for using sachathya!')
-        self.qttls.uiLayoutSave()
+        self.exitCleanUpActivity(None)
 
     def closeEvent(self, event):
+        #self.exitCleanUpActivity(event)
+        if event: event.accept()
+    
+    def exitCleanUpActivity(self, event):
         self.tls.info('PyTasky exit actions initiated...')
+        
         self.qttls.uiLayoutSave()
-        event.accept()
+        self.tls.info('PyTasky ui saved!')
+        
+        self.schExecuter.stop()
+        self.tls.info('PyTasky scheduler shutdown!')
+        
+        self.MainQueue.put("__quit__")
+        self.queueListener.running = False
+        self.tls.info('PyTasky event queue shutdown!')
+        
+        self.tls.info('PyTasky shutdown completed!')   
+        
+        event.accept()    
 
     def bringConsoleToFocus(self):
         # Make sure it's visible
@@ -498,7 +760,7 @@ class core():
         self.currentScriptEditor.setText(self.currentScriptContent)
         self.currentScriptEditor.setWindowTitle(f"Editing - {self.currentScriptFile}")
         self.currentScriptEditor.show()        
-            
+
 
 if __name__ == "__main__":
     tls = kTools.KTools("PYTASKY", PyTaskyLookUps, "pytasky_config.json")

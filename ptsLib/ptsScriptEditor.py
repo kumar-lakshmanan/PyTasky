@@ -6,7 +6,7 @@
 '''
 
 __created__ = "2025-08-25"
-__updated__ = "2025-09-08"
+__updated__ = "2025-09-19"
 __author__  = "kayma"
 import sys
 import keyword
@@ -45,8 +45,7 @@ class ScriptEditorWindow(QMainWindow):
 
         self.saveBtn = self.qttls.createAction("Save", self.ui, icon="file_save_as.ico", fn=self.saveScript)
         self.runBtn = self.qttls.createAction("Run", self.ui, icon="control_play_blue.ico", fn=self.runScript)
-        self.closeBtn = self.qttls.createAction("Close", self.ui, icon="cross.ico", fn=self.saveScript)
-        self.closeBtn.triggered.connect(self.close)
+        self.closeBtn = self.qttls.createAction("Close", self.ui, icon="cross.ico", fn=self.close)
         
         toolbar.addAction(self.runBtn)
         toolbar.addAction(self.saveBtn)
@@ -227,8 +226,8 @@ class ScriptEditorWindow(QMainWindow):
                     #self.editor.autoCompletionShowSingle()
                     
                 except Exception as e:
-                    tls.error("Autocomplete failed")
-                    tls.error(e)    
+                    self.tls.error("Autocomplete failed")
+                    self.tls.error(e)    
                     
             elif text and text[-1].isalpha():
                 # User is typing a prefix after a dot
