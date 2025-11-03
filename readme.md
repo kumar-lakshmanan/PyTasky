@@ -31,6 +31,17 @@ From **Excel automation** to **AI model operation support**, PyTasky democratize
 
 ---
 
+## **In General - What, PyTasky is for**  
+
+✅ For building any **custom desktop tool for any desktop activity rapidly by reusing things** and sharing it with other users.
+
+
+## **In General - What, PyTasky is not for**  
+
+✅ Not for any **Serious, public usage related, Process/Memory/Computation Intensive** Tasks
+
+---
+
 ## **Why PyTasky?**  
 🔹 **No-Code Simplicity + Pro-Code Flexibility**  
 🔹 **Enterprise-Ready Scalability**  
