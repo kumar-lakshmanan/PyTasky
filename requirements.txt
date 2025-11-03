@@ -6,3 +6,6 @@ pytest-playwright
 selenium
 jsonpath-ng
 pyyaml
+openpyxl
+numpy
+docker

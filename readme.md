@@ -43,6 +43,7 @@ Say goodbye to manual complexity and hello to **intelligent, scalable automation
   
 ---
 
+![PyTasky](https://github.com/kumar-lakshmanan/PyTasky/blob/main/doc/image5.png?raw=true "PyTasky")
 ![PyTasky](https://github.com/kumar-lakshmanan/PyTasky/blob/main/doc/image1.png?raw=true "PyTasky")
 ![PyTasky](https://github.com/kumar-lakshmanan/PyTasky/blob/main/doc/image2.png?raw=true "PyTasky")
 ![PyTasky](https://github.com/kumar-lakshmanan/PyTasky/blob/main/doc/image3.png?raw=true "PyTasky")
